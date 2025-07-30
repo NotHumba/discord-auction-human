@@ -24,6 +24,7 @@
   {"name": "Fernando Torres", "position": "st", "tier": "B", "base_price": 35000000},
   {"name": "Dusan Vlahović", "position": "st", "tier": "B", "base_price": 36000000},
   {"name": "Pierre-Emerick Aubameyang", "position": "st", "tier": "B", "base_price": 30000000},
+  {"name": "Roberto Firmino", "position": "st", "tier": "B", "base_price": 30000000},
   {"name": "Timo Werner", "position": "st", "tier": "B", "base_price": 28000000},
   {"name": "Alexandre Lacazette", "position": "st", "tier": "B", "base_price": 29000000},
   {"name": "Memphis Depay", "position": "st", "tier": "B", "base_price": 26000000},
