@@ -1,0 +1,267 @@
+[
+  {
+    "name": "Gianluigi Buffon",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 31000000
+  },
+  {
+    "name": "Iker Casillas",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 37000000
+  },
+  {
+    "name": "Manuel Neuer",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "Petr Cech",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 36000000
+  },
+  {
+    "name": "Edwin van der Sar",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 20000000
+  },
+  {
+    "name": "Keylor Navas",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 28000000
+  },
+  {
+    "name": "Victor Valdes",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 42000000
+  },
+  {
+    "name": "Thibaut Courtois",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 25000000
+  },
+  {
+    "name": "Marc-Andre ter Stegen",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 44000000
+  },
+  {
+    "name": "Alisson Becker",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 18000000
+  },
+  {
+    "name": "Hugo Lloris",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 42000000
+  },
+  {
+    "name": "Pepe Reina",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 28000000
+  },
+  {
+    "name": "David de Gea",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 38000000
+  },
+
+
+  {
+    "name": "Wojciech Szczesny",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 22000000
+  },
+  {
+    "name": "Jan Oblak",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 32000000
+  },
+  {
+    "name": "Ederson",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 17000000
+  },
+  {
+    "name": "Fernando Muslera",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 27000000
+  },
+  {
+    "name": "Rui Patricio",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 11000000
+  },
+
+
+  {
+    "name": "Kasper Schmeichel",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 5000000
+  },
+
+  {
+    "name": "Kevin Trapp",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 9000000
+  },
+  {
+    "name": "Bernd Leno",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 30000000
+  },
+
+  {
+    "name": "Gianluigi Donnarumma",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 12000000
+  },
+  {
+    "name": "Emiliano Martinez",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 48000000
+  },
+  {
+    "name": "Fraser Forster",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 50000000
+  },
+  {
+    "name": "Joe Hart",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 37000000
+  },
+
+
+
+  {
+    "name": "David Ospina",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 23000000
+  },
+  {
+    "name": "Sven Ulreich",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 35000000
+  },
+  {
+    "name": "Yann Sommer",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 15000000
+  },
+  {
+    "name": "Loris Karius",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 44000000
+  },
+
+  {
+    "name": "Alphonse Areola",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 31000000
+  },
+
+  {
+    "name": "Scott Carson",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 24000000
+  },
+
+  {
+    "name": "Koen Casteels",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 6000000
+  },
+
+  {
+    "name": "Oliver Kahn",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 23000000
+  },
+
+  {
+    "name": "Shay Given",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 16000000
+  },
+
+  {
+    "name": "Pepe Reina",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 41000000
+  },
+  {
+    "name": "Anthony Lopes",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 30000000
+  },
+
+  {
+    "name": "Jose Reina",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 29000000
+  },
+
+
+
+  {
+    "name": "Dida",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 41000000
+  },
+  {
+    "name": "Victor Valdes",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 50000000
+  },
+  {
+    "name": "Julio Cesar",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 12000000
+  },
+  {
+    "name": "Claudio Bravo",
+    "position": "gk",
+    "league": "N/A",
+    "base_price": 31000000
+  }
+]

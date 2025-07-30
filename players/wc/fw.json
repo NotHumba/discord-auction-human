@@ -1,0 +1,302 @@
+[
+  {
+    "name": "Ronaldo Nazario",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 20000000
+  },
+  {
+    "name": "Ronaldinho",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 43000000
+  },
+  {
+    "name": "Thierry Henry",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "David Villa",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 20000000
+  },
+  {
+    "name": "Fernando Torres",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 29000000
+  },
+  {
+    "name": "Wayne Rooney",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 42000000
+  },
+  {
+    "name": "Didier Drogba",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 39000000
+  },
+  {
+    "name": "Luis Suarez",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 24000000
+  },
+  {
+    "name": "Diego Forlan",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 20000000
+  },
+  {
+    "name": "Cristiano Ronaldo",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 30000000
+  },
+  {
+    "name": "Lionel Messi",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 17000000
+  },
+  {
+    "name": "Kylian Mbappe",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 30000000
+  },
+  {
+    "name": "Neymar Jr",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 8000000
+  },
+  {
+    "name": "Robert Lewandowski",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 25000000
+  },
+  {
+    "name": "Zlatan Ibrahimovic",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 44000000
+  },
+  {
+    "name": "Karim Benzema",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 18000000
+  },
+  {
+    "name": "Thomas Muller",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 17000000
+  },
+  {
+    "name": "Samuel Eto'o",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 7000000
+  },
+  {
+    "name": "Edinson Cavani",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 36000000
+  },
+  {
+    "name": "Raul Gonzalez",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 26000000
+  },
+  {
+    "name": "Lukas Podolski",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 29000000
+  },
+  {
+    "name": "Miroslav Klose",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 13000000
+  },
+  {
+    "name": "Gonzalo Higuain",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 50000000
+  },
+  {
+    "name": "Mario Gomez",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 26000000
+  },
+  {
+    "name": "Robin van Persie",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 48000000
+  },
+  {
+    "name": "Arjen Robben",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 26000000
+  },
+  {
+    "name": "Franck Ribery",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 19000000
+  },
+  {
+    "name": "Alexis Sanchez",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "Angel Di Maria",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 48000000
+  },
+  {
+    "name": "Mario Mandzukic",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 36000000
+  },
+  {
+    "name": "Sergio Aguero",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 6000000
+  },
+  {
+    "name": "Carlos Tevez",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 9000000
+  },
+  {
+    "name": "Eden Hazard",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 33000000
+  },
+  {
+    "name": "Radamel Falcao",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "Hulk",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 31000000
+  },
+  {
+    "name": "Philippe Coutinho",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 28000000
+  },
+  {
+    "name": "Alexandre Lacazette",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 22000000
+  },
+  {
+    "name": "Pierre-Emerick Aubameyang",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Timo Werner",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 12000000
+  },
+  {
+    "name": "Antoine Griezmann",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 9000000
+  },
+  {
+    "name": "Joao Felix",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 6000000
+  },
+  {
+    "name": "Paulo Dybala",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "Romelu Lukaku",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 37000000
+  },
+  {
+    "name": "Ciro Immobile",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 39000000
+  },
+  {
+    "name": "Harry Kane",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Raheem Sterling",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 19000000
+  },
+  {
+    "name": "Son Heung-min",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 29000000
+  },
+  {
+    "name": "Christian Pulisic",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "Memphis Depay",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 11000000
+  },
+  {
+    "name": "Olivier Giroud",
+    "position": "fw",
+    "league": "N/A",
+    "base_price": 15000000
+  }
+]

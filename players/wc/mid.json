@@ -1,0 +1,297 @@
+[
+  {
+    "name": "Zinedine Zidane",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 5000000
+  },
+  {
+    "name": "Xavi Hernandez",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 24000000
+  },
+  {
+    "name": "Andres Iniesta",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 34000000
+  },
+  {
+    "name": "Luka Modric",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 46000000
+  },
+  {
+    "name": "Andrea Pirlo",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 41000000
+  },
+  {
+    "name": "Patrick Vieira",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 41000000
+  },
+  {
+    "name": "Claude Makelele",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 6000000
+  },
+  {
+    "name": "Michael Ballack",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 45000000
+  },
+  {
+    "name": "Steven Gerrard",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 42000000
+  },
+  {
+    "name": "Frank Lampard",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 8000000
+  },
+  {
+    "name": "Juan Roman Riquelme",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 13000000
+  },
+  {
+    "name": "Deco",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 38000000
+  },
+  {
+    "name": "Kaka",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 26000000
+  },
+  {
+    "name": "Kevin De Bruyne",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 42000000
+  },
+  {
+    "name": "Sergio Busquets",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 21000000
+  },
+  {
+    "name": "David Silva",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 14000000
+  },
+  {
+    "name": "Cesc Fabregas",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Mesut Ozil",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 48000000
+  },
+  {
+    "name": "Angel Di Maria",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Bastian Schweinsteiger",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 39000000
+  },
+  {
+    "name": "Paul Pogba",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Arturo Vidal",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 48000000
+  },
+  {
+    "name": "Thiago Alcantara",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 40000000
+  },
+  {
+    "name": "Ivan Rakitic",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 43000000
+  },
+  {
+    "name": "Mousa Dembele",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 21000000
+  },
+  {
+    "name": "Yaya Toure",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 29000000
+  },
+  {
+    "name": "Michael Essien",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 40000000
+  },
+  {
+    "name": "Rafael van der Vaart",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 26000000
+  },
+  {
+    "name": "Gareth Barry",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 21000000
+  },
+  {
+    "name": "Lothar Matthaus",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 18000000
+  },
+  {
+    "name": "Christian Eriksen",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 16000000
+  },
+  {
+    "name": "Hakan Calhanoglu",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 38000000
+  },
+  {
+    "name": "Wesley Sneijder",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 23000000
+  },
+  {
+    "name": "Dirk Kuyt",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 26000000
+  },
+  {
+    "name": "Nigel de Jong",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 33000000
+  },
+  {
+    "name": "Javier Mascherano",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 33000000
+  },
+  {
+    "name": "Gennaro Gattuso",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 35000000
+  },
+
+  {
+    "name": "Marco Verratti",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "N'Golo Kante",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 50000000
+  },
+  {
+    "name": "Paul Scholes",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Philipp Lahm",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 28000000
+  },
+  {
+    "name": "Dani Parejo",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 49000000
+  },
+  {
+    "name": "James Rodriguez",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 47000000
+  },
+  {
+    "name": "Leroy Sane",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 13000000
+  },
+  {
+    "name": "Hakim Ziyech",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 14000000
+  },
+  {
+    "name": "Ilkay Gundogan",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 31000000
+  },
+  {
+    "name": "Lucas Moura",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 21000000
+  },
+  {
+    "name": "Bruno Fernandes",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 34000000
+  },
+  {
+    "name": "Miralem Pjanic",
+    "position": "mid",
+    "league": "N/A",
+    "base_price": 17000000
+  }
+]
