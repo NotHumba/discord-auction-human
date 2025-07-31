@@ -7,12 +7,8 @@
   {"name": "Bernardo Silva", "position": "rw", "tier": "A", "base_price": 45000000},
   {"name": "Riyad Mahrez", "position": "rw", "tier": "A", "base_price": 44000000},
   {"name": "Pedro", "position": "rw", "tier": "A", "base_price": 43000000},
-  {"name": "Kingsley Coman", "position": "rw", "tier": "A", "base_price": 42000000},
   {"name": "Rodrygo", "position": "rw", "tier": "A", "base_price": 41000000},
   {"name": "Marco Asensio", "position": "rw", "tier": "A", "base_price": 40000000},
-  {"name": "Serge Gnabry", "position": "rw", "tier": "A", "base_price": 40000000},
-  {"name": "Ansu Fati", "position": "rw", "tier": "A", "base_price": 40000000},
-  {"name": "Vinícius Júnior", "position": "rw", "tier": "A", "base_price": 40000000},
   {"name": "Raheem Sterling", "position": "rw", "tier": "A", "base_price": 40000000},
 
   {"name": "Phil Foden", "position": "rw", "tier": "B", "base_price": 39000000},
