@@ -3,6 +3,7 @@
   {"name": "Dani Alves", "position": "rb", "tier": "A", "base_price": 49000000},
   {"name": "Philipp Lahm", "position": "rb", "tier": "A", "base_price": 48000000},
   {"name": "Trent Alexander-Arnold", "position": "rb", "tier": "A", "base_price": 47000000},
+  {"name": "Kyle Walker", "position": "rb", "tier": "A", "base_price": 42000000},
   {"name": "Gary Neville", "position": "rb", "tier": "A", "base_price": 46000000},
   {"name": "Javier Zanetti", "position": "rb", "tier": "A", "base_price": 45000000},
   {"name": "Sergi Roberto", "position": "rb", "tier": "A", "base_price": 44000000},
