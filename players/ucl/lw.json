@@ -1,18 +1,12 @@
 [
   {"name": "Cristiano Ronaldo", "position": "lw", "tier": "A", "base_price": 50000000},
   {"name": "Ronaldinho", "position": "lw", "tier": "A", "base_price": 49000000},
-  {"name": "Vinícius Júnior", "position": "lw", "tier": "A", "base_price": 48000000},
   {"name": "Franck Ribéry", "position": "lw", "tier": "A", "base_price": 47000000},
-  {"name": "Gareth Bale", "position": "lw", "tier": "A", "base_price": 46000000},
   {"name": "Sadio Mané", "position": "lw", "tier": "A", "base_price": 45000000},
-  {"name": "Raheem Sterling", "position": "lw", "tier": "A", "base_price": 44000000},
   {"name": "Kingsley Coman", "position": "lw", "tier": "A", "base_price": 43000000},
-  {"name": "Angel Di Maria", "position": "lw", "tier": "A", "base_price": 42000000},
-  {"name": "Arjen Robben", "position": "lw", "tier": "A", "base_price": 41000000},
   {"name": "Eden Hazard", "position": "lw", "tier": "A", "base_price": 40000000},
   {"name": "Rafael Leão", "position": "lw", "tier": "A", "base_price": 40000000},
   {"name": "Marco Asensio", "position": "lw", "tier": "A", "base_price": 40000000},
-  {"name": "Pedro", "position": "lw", "tier": "A", "base_price": 40000000},
   {"name": "David Villa", "position": "lw", "tier": "A", "base_price": 40000000},
 
   {"name": "Ansu Fati", "position": "lw", "tier": "B", "base_price": 39000000},
@@ -36,7 +30,7 @@
   {"name": "Lucas Ocampos", "position": "lw", "tier": "B", "base_price": 25000000},
   {"name": "Federico Chiesa", "position": "lw", "tier": "B", "base_price": 25000000},
 
-  {"name": "Jesús Navas", "position": "lw", "tier": "C", "base_price": 24000000},
+  
   {"name": "Adriano", "position": "lw", "tier": "C", "base_price": 23000000},
   {"name": "Brahim Díaz", "position": "lw", "tier": "C", "base_price": 22000000},
   {"name": "Danijel Pranjić", "position": "lw", "tier": "C", "base_price": 21000000},
