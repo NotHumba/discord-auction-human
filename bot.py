@@ -216,13 +216,13 @@ async def on_message(message):
             
             if all_positions_loaded_successfully:
                 embed = discord.Embed(title="🎉 Auction Started", 
-                                     description=f"**Set Selected:** {available_sets[set_key]}\n\nOnly the host or <@{PRIVILEGED_USER_ID}> can run position commands and !endauction.", 
+                                     description=f"**Set Selected:** {available_sets[set_key]}\n\nOnly the host or <@{PRIVILEGED_USER_ID}> can run position commands, !rebid, !custombid, and !endauction.", 
                                      color=discord.Color.green())
                 embed.set_footer(text="Only registered users can bid. Good luck!")
                 await message.channel.send(embed=embed)
             else:
                 embed = discord.Embed(title="⚠️ Set Loaded with Warnings", 
-                                     description=f"**Set Selected:** {available_sets[set_key]}\n\nNo players available for positions: {', '.join(error_positions)}.", 
+                                     description=f"**Set Selected:** {available_sets[set_key]}\n\nNo players available for positions: {', '.join(error_positions)}. Use !custombid <name> <price> <position> to auction custom players.", 
                                      color=discord.Color.orange())
                 await message.channel.send(embed=embed)
             message_consumed = True
@@ -420,6 +420,11 @@ async def handle_pass_reaction(user, channel):
             auction_state['timeout_task'].cancel()
         auction_state['pass_votes'].clear()
         
+        # Add to unsold players
+        if 'unsold_players' not in auction_state:
+            auction_state['unsold_players'] = []
+        auction_state['unsold_players'].append(player)
+        
         embed = discord.Embed(title="🚫 Player Unsold", 
                             description=f"**{player['name']}** received no bids and goes unsold.", 
                             color=discord.Color.red())
@@ -461,7 +466,11 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         "awaiting_set_selection": False,
         "set_selection_author": None,
         "pass_votes": set(),
-        "tier_counters": {pos: {'A': 0, 'B': 0, 'C': 0} for pos in available_positions}
+        "tier_counters": {pos: {'A': 0, 'B': 0, 'C': 0} for pos in available_positions},
+        "last_sold_player": None,
+        "last_sold_price": 0,
+        "last_sold_winner_id": None,
+        "unsold_players": []
     }
     
     auction_state = active_auctions[ctx.channel.id]
@@ -652,7 +661,7 @@ def create_position_command(position):
         
         tiered_queues = auction_state['player_queues'].get(position)
         if not tiered_queues or not any(tiered_queues[tier] for tier in ['A', 'B', 'C']):
-            await ctx.send(f"No players left for **{position.upper()}** in the {available_sets[auction_state['current_set']]} set in this auction.")
+            await ctx.send(f"No players left for **{position.upper()}** in the {available_sets[auction_state['current_set']]} set in this auction. Use !custombid <name> <price> {position} to auction a custom player.")
             return
         
         # Determine the next tier to auction (3 A, 5 B, 3 C, repeat)
@@ -674,7 +683,7 @@ def create_position_command(position):
                     tier = fallback_tier
                     break
             else:
-                await ctx.send(f"No players left for **{position.upper()}** in the {available_sets[auction_state['current_set']]} set in this auction.")
+                await ctx.send(f"No players left for **{position.upper()}** in the {available_sets[auction_state['current_set']]} set in this auction. Use !custombid <name> <price> {position} to auction a custom player.")
                 return
         
         if auction_state['timeout_task']:
@@ -824,12 +833,19 @@ async def _finalize_sold(ctx):
         return
 
     if auction_state['highest_bidder'] is None:
-        await ctx.send("❌ No one bid for this player. They go unsold.")
+        player = auction_state['current_player']
         auction_state['bidding'] = False
         auction_state['current_player'] = None
         auction_state['current_price'] = 0
         auction_state['highest_bidder'] = None
         auction_state['pass_votes'].clear()
+        
+        # Add to unsold players
+        if 'unsold_players' not in auction_state:
+            auction_state['unsold_players'] = []
+        auction_state['unsold_players'].append(player)
+        
+        await ctx.send(f"❌ No one bid for **{player['name']}**. They go unsold.")
         return
 
     winner_id = auction_state['highest_bidder']
@@ -848,9 +864,14 @@ async def _finalize_sold(ctx):
         "position": player['position'],
         "league": player.get('league', 'Unknown'),
         "price": price,
-        "set": available_sets.get(auction_state['current_set'], 'Unknown Set'),
-        "tier": player['tier']
+        "set": available_sets.get(auction_state['current_set'], 'Custom') if player.get('set', 'Custom') == 'Custom' else player.get('set', 'Unknown Set'),
+        "tier": player.get('tier', 'C')
     })
+
+    # Store the last sold player details
+    auction_state['last_sold_player'] = player
+    auction_state['last_sold_price'] = price
+    auction_state['last_sold_winner_id'] = winner_id
 
     auction_state['bidding'] = False
     auction_state['current_player'] = None
@@ -865,8 +886,236 @@ async def _finalize_sold(ctx):
     embed.add_field(name="Player", value=player['name'], inline=True)
     embed.add_field(name="Sold To", value=f"<@{winner_id}> ({winner_name})", inline=True)
     embed.add_field(name="Final Price", value=format_currency(price), inline=True)
-    embed.add_field(name="Set", value=available_sets.get(auction_state['current_set'], 'Unknown Set'), inline=True)
+    embed.add_field(name="Set", value=available_sets.get(auction_state['current_set'], 'Custom') if player.get('set', 'Custom') == 'Custom' else player.get('set', 'Unknown Set'), inline=True)
     await ctx.send(embed=embed)
+
+@bot.command()
+async def rebid(ctx):
+    """Rebids the last sold player, removing them from the winner's team and refunding the money."""
+    auction_state = active_auctions.get(ctx.channel.id)
+    if not auction_state:
+        await ctx.send("No auction is currently running in this channel.")
+        return
+
+    if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
+        await ctx.send("Only the auction host or the privileged user can use this command in this auction.")
+        return
+
+    if not auction_state['last_sold_player']:
+        await ctx.send("No player has been sold yet in this auction to rebid.")
+        return
+
+    # Get the last sold player details
+    player = auction_state['last_sold_player']
+    price = auction_state['last_sold_price']
+    winner_id = auction_state['last_sold_winner_id']
+
+    # Remove the player from the winner's team
+    if winner_id in user_teams:
+        user_teams[winner_id] = [p for p in user_teams[winner_id] if p['name'] != player['name'] or p['position'] != player['position'] or p['price'] != price]
+
+    # Refund the money
+    if winner_id in user_budgets:
+        user_budgets[winner_id] += price
+
+    # Remove the player from the winner's lineup if present
+    if winner_id in user_lineups and user_lineups[winner_id]['players']:
+        user_lineups[winner_id]['players'] = [p for p in user_lineups[winner_id]['players'] if p['name'] != player['name'] or p['position'] != player['position'] or p['price'] != price]
+
+    # Save the updated data
+    if not save_data():
+        await ctx.send("⚠️ Error saving data. Rebid initiated but data may not persist.")
+        return
+
+    # Add the player back to the appropriate tier queue
+    position = player['position'].lower()
+    tier = player['tier']
+    if position in auction_state['player_queues'] and tier in auction_state['player_queues'][position]:
+        auction_state['player_queues'][position][tier].append(player)
+        # Decrement the tier counter to maintain the correct cycle
+        auction_state['tier_counters'][position][tier] -= 1
+
+    # Cancel any ongoing auction
+    if auction_state['timeout_task']:
+        auction_state['timeout_task'].cancel()
+    auction_state['bidding'] = False
+    auction_state['current_player'] = None
+    auction_state['current_price'] = 0
+    auction_state['highest_bidder'] = None
+    auction_state['pass_votes'].clear()
+
+    # Start the rebid
+    auction_state['current_player'] = player
+    auction_state['bidding'] = True
+    auction_state['bids'] = {}
+    auction_state['current_price'] = player.get('base_price', MIN_BASE_PRICE)
+    auction_state['highest_bidder'] = None
+
+    embed = discord.Embed(title="🔄 Player Rebid", color=discord.Color.gold())
+    embed.add_field(name="Name", value=player['name'], inline=True)
+    embed.add_field(name="Position", value=player.get('position', 'Unknown').upper(), inline=True)
+    embed.add_field(name="League", value=player.get('league', 'Unknown'), inline=True)
+    embed.add_field(name="Set", value=available_sets[auction_state['current_set']] if player.get('set') != 'Custom' else 'Custom', inline=True)
+    embed.add_field(name="Starting Price", value=format_currency(auction_state['current_price']), inline=False)
+    embed.set_footer(text="Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass.")
+    
+    message = await ctx.send(embed=embed)
+    await message.add_reaction("💰")
+    await message.add_reaction("❌")
+
+    async def auto_sold():
+        try:
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await asyncio.sleep(7)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await ctx.send("⌛ Going once...")
+            await asyncio.sleep(1)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await ctx.send("⌛ Going twice...")
+            await asyncio.sleep(1)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await ctx.send("⌛ Final call...")
+            await asyncio.sleep(1)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await _finalize_sold(ctx)
+        except asyncio.CancelledError:
+            pass
+
+    auction_state['timeout_task'] = bot.loop.create_task(auto_sold())
+
+@bot.command()
+async def custombid(ctx, name: str, price: str, position: str):
+    """Auctions a custom player with specified name, starting price, and position."""
+    auction_state = active_auctions.get(ctx.channel.id)
+    if not auction_state:
+        await ctx.send("No auction is currently running in this channel.")
+        return
+
+    if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
+        await ctx.send("Only the auction host or the privileged user can use this command in this auction.")
+        return
+
+    if auction_state['current_set'] is None:
+        await ctx.send("❌ No set has been selected for this auction. The host needs to select a set first.")
+        return
+
+    if auction_state['bidding']:
+        await ctx.send("An auction is already in progress. Please wait until it concludes or use !sold/!unsold.")
+        return
+
+    position = position.lower()
+    if position not in available_positions:
+        await ctx.send(f"Invalid position. Choose from: {', '.join(available_positions)}")
+        return
+
+    # Parse and validate price
+    price = price.strip().lower().replace(",", "")
+    multiplier = 1
+    if price.endswith("m"):
+        multiplier = 1_000_000
+        price = price[:-1]
+    elif price.endswith("k"):
+        multiplier = 1_000
+        price = price[:-1]
+    
+    try:
+        start_price = int(float(price) * multiplier)
+    except ValueError:
+        await ctx.send("❌ Invalid price format. Use numbers like 50m or 1000000.")
+        return
+
+    if start_price < MIN_BASE_PRICE or start_price > MAX_BASE_PRICE:
+        await ctx.send(f"Starting price must be between {format_currency(MIN_BASE_PRICE)} and {format_currency(MAX_BASE_PRICE)}.")
+        return
+
+    # Check if the player has been sold or marked unsold
+    for user_id, team in user_teams.items():
+        for player in team:
+            if player['name'].lower() == name.lower() and player['position'].lower() == position:
+                await ctx.send(f"❌ Player '{name}' ({position.upper()}) has already been sold in this auction.")
+                return
+
+    if 'unsold_players' in auction_state:
+        for player in auction_state['unsold_players']:
+            if player['name'].lower() == name.lower() and player['position'].lower() == position:
+                await ctx.send(f"❌ Player '{name}' ({position.upper()}) was previously marked unsold in this auction.")
+                return
+
+    # Determine tier based on price
+    if 40000000 <= start_price <= 50000000:
+        tier = 'A'
+    elif 25000000 <= start_price <= 39000000:
+        tier = 'B'
+    else:
+        tier = 'C'
+
+    # Create custom player
+    player = {
+        'name': name,
+        'position': position,
+        'league': 'Custom',
+        'base_price': start_price,
+        'tier': tier,
+        'set': 'Custom'
+    }
+
+    # Cancel any ongoing auction
+    if auction_state['timeout_task']:
+        auction_state['timeout_task'].cancel()
+    auction_state['bidding'] = False
+    auction_state['current_player'] = None
+    auction_state['current_price'] = 0
+    auction_state['highest_bidder'] = None
+    auction_state['pass_votes'].clear()
+
+    # Start the custom bid
+    auction_state['current_player'] = player
+    auction_state['bidding'] = True
+    auction_state['bids'] = {}
+    auction_state['current_price'] = start_price
+    auction_state['highest_bidder'] = None
+
+    embed = discord.Embed(title="🔨 Custom Player Up for Auction", color=discord.Color.gold())
+    embed.add_field(name="Name", value=player['name'], inline=True)
+    embed.add_field(name="Position", value=player['position'].upper(), inline=True)
+    embed.add_field(name="League", value='Custom', inline=True)
+    embed.add_field(name="Set", value='Custom', inline=True)
+    embed.add_field(name="Starting Price", value=format_currency(start_price), inline=False)
+    embed.set_footer(text="Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass.")
+
+    message = await ctx.send(embed=embed)
+    await message.add_reaction("💰")
+    await message.add_reaction("❌")
+
+    async def auto_sold():
+        try:
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await asyncio.sleep(7)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await ctx.send("⌛ Going once...")
+            await asyncio.sleep(1)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await ctx.send("⌛ Going twice...")
+            await asyncio.sleep(1)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await ctx.send("⌛ Final call...")
+            await asyncio.sleep(1)
+            if not auction_state.get('bidding', False) or auction_state.get('current_player') != player:
+                return
+            await _finalize_sold(ctx)
+        except asyncio.CancelledError:
+            pass
+
+    auction_state['timeout_task'] = bot.loop.create_task(auto_sold())
 
 @bot.command()
 async def sold(ctx):
@@ -906,7 +1155,7 @@ async def status(ctx):
     embed.add_field(name="Player", value=player['name'], inline=True)
     embed.add_field(name="Position", value=player.get('position', 'Unknown').upper(), inline=True)
     embed.add_field(name="League", value=player.get('league', 'Unknown'), inline=True)
-    embed.add_field(name="Set", value=available_sets.get(auction_state['current_set'], 'Unknown Set'), inline=True)
+    embed.add_field(name="Set", value=available_sets.get(auction_state['current_set'], 'Custom') if player.get('set', 'Custom') == 'Custom' else player.get('set', 'Unknown Set'), inline=True)
     embed.add_field(name="Highest Bid", value=format_currency(price), inline=True)
     embed.add_field(name="Highest Bidder", value=bidder, inline=True)
     await ctx.send(embed=embed)
@@ -936,6 +1185,11 @@ async def unsold(ctx):
     
     if auction_state['timeout_task']:
         auction_state['timeout_task'].cancel()
+    
+    # Add to unsold players
+    if 'unsold_players' not in auction_state:
+        auction_state['unsold_players'] = []
+    auction_state['unsold_players'].append(player)
     
     await ctx.send(f"❌ Player **{player['name']}** goes unsold in this auction.")
 
@@ -1266,85 +1520,4 @@ async def rankteams(ctx):
         formation = lineup_data['formation'] if lineup_data['players'] else '4-4-2'
 
         description_list.append(f"**{i+1}.** <@{user_id}> ({name}): **{score} Team Score** ({len(players_in_lineup)} players in lineup)\n"
-                               f"  Positions: {', '.join(p.upper() for p in positions_covered) if positions_covered else 'None'}\n"
-                               f"  Tactic: {tactic}, Formation: {formation}\n"
-                               f"  {set_summary}\n"
-                               f"  {tier_summary}\n")
-    
-    embed.description = "\n".join(description_list)
-    embed.set_footer(text="Higher Team Score indicates a more complete and cohesive lineup.")
-    await ctx.send(embed=embed)
-
-@bot.command()
-async def endauction(ctx):
-    """Ends the current auction in this channel and resets its data and participant data (host or privileged user only)."""
-    auction_state = active_auctions.get(ctx.channel.id)
-    if not auction_state:
-        await ctx.send("No auction is currently running in this channel.")
-        return
-
-    if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can end this auction.")
-        return
-    
-    if auction_state['timeout_task']:
-        auction_state['timeout_task'].cancel()
-    
-    participants = auction_state['participants'].copy()
-    for user_id in participants:
-        user_budgets[user_id] = STARTING_BUDGET
-        user_teams[user_id] = []
-        user_lineups[user_id] = {'players': [], 'tactic': 'Balanced', 'formation': '4-4-2'}
-    
-    del active_auctions[ctx.channel.id]
-    
-    if not save_data():
-        await ctx.send("⚠️ Error saving data. Auction ended, but data may not persist.")
-        return
-    
-    await ctx.send("🔚 Auction in this channel has been ended. Participant budgets, teams, and lineups have been reset.")
-
-@bot.command(name="footy")
-async def footy(ctx):
-    """Displays a help message with all available bot commands."""
-    embed = discord.Embed(title="📘 Football Auction Bot Help", 
-                         description="Here are the available commands:", 
-                         color=discord.Color.blue())
-    embed.add_field(name="🟢 !startauction @user1 @user2 ...", 
-                   value="Start an auction in the current channel and register players. Host and participants must not be in another auction.", inline=False)
-    embed.add_field(name="🎯 !sets", 
-                   value="Show all available auction sets.", inline=False)
-    embed.add_field(name="👤 !participants", 
-                   value="Show all registered participants and current set for *this channel's auction*.", inline=False)
-    embed.add_field(name="➕ !add @user", 
-                   value=f"Add a participant to *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only). User must not be in another auction.", inline=True)
-    embed.add_field(name="➖ !remove @user", 
-                   value=f"Remove a participant from *this channel's auction* with confirmation (host or <@{PRIVILEGED_USER_ID}> only).", inline=True)
-    embed.add_field(name="⚽ !st / !rw / !lw / !cam / !cm / !lb / !cb / !rb / !gk", 
-                   value=f"Start auction for a player from that position in *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only). Players are auctioned in order: 3 A-tier (40-50M), 5 B-tier (25-39M), 3 C-tier (1-24M), repeating.", inline=False)
-    embed.add_field(name="💸 !bid / !bid [amount]", 
-                   value="Place a bid in *this channel's auction*.", inline=False)
-    embed.add_field(name="✅ !sold", 
-                   value=f"Sell current player to the highest bidder in *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only).", inline=False)
-    embed.add_field(name="🚫 !unsold", 
-                   value=f"Mark current player as unsold in *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only).", inline=False)
-    embed.add_field(name="📊 !status", 
-                   value="Check current auction status in *this channel*.", inline=False)
-    embed.add_field(name="📁 !myplayers", 
-                   value="View your bought players (global to you).", inline=False)
-    embed.add_field(name="⚽ !setlineup", 
-                   value="Interactively set your lineup (global to you).", inline=False)
-    embed.add_field(name="📋 !viewlineup", 
-                   value="View your current lineup (global to you).", inline=False)
-    embed.add_field(name="⚽ !battle @user1 @user2", 
-                   value=f"Simulate a match between two participants' lineups (host or <@{PRIVILEGED_USER_ID}> only, for *this channel's auction*).", inline=False)
-    embed.add_field(name="🏆 !rankteams", 
-                   value="Rank all participant teams based on lineup composition (global rankings).", inline=False)
-    embed.add_field(name="🔚 !endauction", 
-                   value=f"End the auction in *this channel* and reset its specific state and participant data (host or <@{PRIVILEGED_USER_ID}> only).", inline=False)
-    await ctx.send(embed=embed)
-
-import os
-from keep_alive import keep_alive
-keep_alive()
-bot.run(os.getenv("DISCORD_BOT_TOKEN"))
+                               f"  Positions: {', '.join(p.upper() for p in positions_c
