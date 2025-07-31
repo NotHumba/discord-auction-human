@@ -1,11 +1,9 @@
 [
   {"name": "Kylian Mbappé", "position": "lw", "tier": "A", "base_price": 50000000},
   {"name": "Ronaldinho", "position": "lw", "tier": "A", "base_price": 48000000},
-  {"name": "Zinedine Zidane", "position": "lw", "tier": "A", "base_price": 46000000},
   {"name": "Mario Kempes", "position": "lw", "tier": "A", "base_price": 45000000},
   {"name": "Garrincha", "position": "lw", "tier": "A", "base_price": 44000000},
   {"name": "Rivaldo", "position": "lw", "tier": "A", "base_price": 43000000},
-  {"name": "Andrés Iniesta", "position": "lw", "tier": "A", "base_price": 42000000},
   {"name": "David Villa", "position": "lw", "tier": "A", "base_price": 42000000},
   {"name": "Jairzinho", "position": "lw", "tier": "A", "base_price": 41000000},
   {"name": "Kingsley Coman", "position": "lw", "tier": "A", "base_price": 40000000},
