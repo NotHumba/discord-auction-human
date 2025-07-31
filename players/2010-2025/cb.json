@@ -8,6 +8,7 @@
   {"name": "Mats Hummels", "position": "cb", "tier": "A", "base_price": 47000000},
   {"name": "Kalidou Koulibaly", "position": "cb", "tier": "A", "base_price": 46500000},
   {"name": "Aymeric Laporte", "position": "cb", "tier": "A", "base_price": 46000000},
+  {"name": "Godin", "position": "cb", "tier": "A", "base_price": 46000000},
   {"name": "Pepe", "position": "cb", "tier": "A", "base_price": 45500000},
   {"name": "Antonio Rüdiger", "position": "cb", "tier": "A", "base_price": 45000000},
   {"name": "John Terry", "position": "cb", "tier": "A", "base_price": 44500000},
