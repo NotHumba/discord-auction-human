@@ -1,7 +1,6 @@
 [
   {"name": "Zinedine Zidane", "position": "cam", "tier": "A", "base_price": 50000000},
   {"name": "Kaká", "position": "cam", "tier": "A", "base_price": 48000000},
-  {"name": "Andrés Iniesta", "position": "cam", "tier": "A", "base_price": 47000000},
   {"name": "Mesut Özil", "position": "cam", "tier": "A", "base_price": 46000000},
   {"name": "Kevin De Bruyne", "position": "cam", "tier": "A", "base_price": 45000000},
   {"name": "Diego Maradona", "position": "cam", "tier": "A", "base_price": 44000000},
