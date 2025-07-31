@@ -1520,4 +1520,4 @@ async def rankteams(ctx):
         formation = lineup_data['formation'] if lineup_data['players'] else '4-4-2'
 
         description_list.append(f"**{i+1}.** <@{user_id}> ({name}): **{score} Team Score** ({len(players_in_lineup)} players in lineup)\n"
-                               f"  Positions: {', '.join(p.upper() for p in positions_c)}
+                               f"  Positions: {', '.join(p.upper() for p in positions_covered) if positions_covered else 'None'}"
