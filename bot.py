@@ -5,6 +5,7 @@ import random
 import os
 import asyncio
 import uuid
+import time
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -17,6 +18,7 @@ MIN_BASE_PRICE = 1000000
 MAX_PLAYERS_PER_USER = 15
 MAX_LINEUP_PLAYERS = 11
 PRIVILEGED_USER_ID = 962232390686765126
+HOST_TIMEOUT = 300  # 5 minutes in seconds
 
 available_positions = ['st', 'rw', 'lw', 'cam', 'cm', 'lb', 'cb', 'rb', 'gk']
 available_tactics = ['Attacking', 'Defensive', 'Balanced']
@@ -181,13 +183,17 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    """Handles incoming messages for set selection and lineup setup."""
+    """Handles incoming messages for set selection, lineup setup, and host activity."""
     if message.author.bot:
         return
 
     message_consumed = False
 
+    # Update host last activity time if message is from host
     auction_state_for_channel = active_auctions.get(message.channel.id)
+    if auction_state_for_channel and message.author.id == auction_state_for_channel['host']:
+        auction_state_for_channel['last_host_activity'] = time.time()
+
     if (auction_state_for_channel and
         auction_state_for_channel['awaiting_set_selection'] and 
         message.author.id == auction_state_for_channel['set_selection_author']):
@@ -383,6 +389,9 @@ async def on_reaction_add(reaction, user):
     if str(user.id) not in auction_state['participants']:
         return
     
+    if auction_state['host'] == user.id:
+        auction_state['last_host_activity'] = time.time()
+    
     if str(reaction.emoji) == '💰':
         fake_ctx = type('obj', (object,), {
             'author': user,
@@ -402,6 +411,9 @@ async def handle_pass_reaction(user, channel):
     user_id = str(user.id)
     if user_id not in auction_state['participants']:
         return
+    
+    if auction_state['host'] == user.id:
+        auction_state['last_host_activity'] = time.time()
     
     auction_state['pass_votes'].add(user_id)
     
@@ -428,6 +440,36 @@ async def handle_pass_reaction(user, channel):
                             color=discord.Color.orange())
         await channel.send(embed=embed)
 
+async def check_host_activity(channel_id):
+    """Checks if the host is inactive for too long and ends the auction."""
+    while channel_id in active_auctions:
+        auction_state = active_auctions.get(channel_id)
+        if not auction_state:
+            break
+        
+        current_time = time.time()
+        last_activity = auction_state.get('last_host_activity', current_time)
+        
+        if current_time - last_activity > HOST_TIMEOUT:
+            if auction_state['timeout_task']:
+                auction_state['timeout_task'].cancel()
+            
+            participants = auction_state['participants'].copy()
+            for user_id in participants:
+                user_budgets[user_id] = STARTING_BUDGET
+                user_teams[user_id] = []
+                user_lineups[user_id] = {'players': [], 'tactic': 'Balanced', 'formation': '4-4-2'}
+            
+            channel = bot.get_channel(channel_id)
+            if channel:
+                await channel.send("🔚 Auction ended due to host inactivity for 5 minutes. Participant budgets, teams, and lineups have been reset.")
+            
+            del active_auctions[channel_id]
+            save_data()
+            break
+        
+        await asyncio.sleep(60)  # Check every minute
+
 @bot.command()
 async def startauction(ctx, *members: discord.Member, timer: int = 30):
     """Starts a new auction, registers participants, and prompts for set selection."""
@@ -435,12 +477,12 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         await ctx.send("❌ An auction is already active in this channel. Please use a different channel or end the current auction first.")
         return
     
-    if is_user_in_any_auction(ctx.author.id):
+    if is_user_in_any_auction(ctx.author.id) and ctx.author.id != PRIVILEGED_USER_ID:
         await ctx.send(f"❌ {ctx.author.display_name}, you are already participating in another auction.")
         return
 
     for member in members:
-        if is_user_in_any_auction(member.id):
+        if is_user_in_any_auction(member.id) and member.id != PRIVILEGED_USER_ID:
             await ctx.send(f"❌ {member.display_name} is already participating in another auction.")
             return
 
@@ -463,7 +505,8 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         "last_sold_player": None,
         "last_sold_buyer_id": None,
         "last_sold_price": 0,
-        "unsold_players": set()
+        "unsold_players": set(),
+        "last_host_activity": time.time()
     }
     
     auction_state = active_auctions[ctx.channel.id]
@@ -493,6 +536,9 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
     auction_state['awaiting_set_selection'] = True
     auction_state['set_selection_author'] = ctx.author.id
 
+    # Start host activity check
+    bot.loop.create_task(check_host_activity(ctx.channel.id))
+
 @bot.command()
 async def sets(ctx):
     """Shows all available auction sets."""
@@ -514,6 +560,9 @@ async def participants(ctx):
         await ctx.send("No auction is currently running in this channel.")
         return
     
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
+    
     users = []
     for uid in auction_state['participants']:
         try:
@@ -532,17 +581,20 @@ async def participants(ctx):
 
 @bot.command()
 async def add(ctx, member: discord.Member):
-    """Adds a new participant to the ongoing auction (host or privileged user only)."""
+    """Adds a new participant to the ongoing auction."""
     auction_state = active_auctions.get(ctx.channel.id)
     if not auction_state:
         await ctx.send("No auction is currently running in this channel.")
         return
 
     if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can add participants to this auction.")
+        await ctx.send("Only the auction host can add participants to this auction.")
         return
     
-    if is_user_in_any_auction(member.id):
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
+    
+    if is_user_in_any_auction(member.id) and member.id != PRIVILEGED_USER_ID:
         await ctx.send(f"❌ {member.display_name} is already participating in another auction.")
         return
 
@@ -558,15 +610,18 @@ async def add(ctx, member: discord.Member):
 
 @bot.command()
 async def remove(ctx, member: discord.Member):
-    """Removes a participant from the auction with confirmation (host or privileged user only)."""
+    """Removes a participant from the auction with confirmation."""
     auction_state = active_auctions.get(ctx.channel.id)
     if not auction_state:
         await ctx.send("No auction is currently running in this channel.")
         return
 
     if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can remove participants from this auction.")
+        await ctx.send("Only the auction host can remove participants from this auction.")
         return
+    
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
     
     if str(member.id) not in auction_state['participants']:
         await ctx.send(f"❌ {member.mention} is not a participant in this auction.")
@@ -645,8 +700,11 @@ def create_position_command(position):
             return
 
         if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-            await ctx.send("Only the auction host or the privileged user can run this command in this auction.")
+            await ctx.send("Only the auction host can run this command in this auction.")
             return
+        
+        if auction_state['host'] == ctx.author.id:
+            auction_state['last_host_activity'] = time.time()
         
         if auction_state['current_set'] is None:
             await ctx.send("❌ No set has been selected for this auction. The host needs to select a set first.")
@@ -738,10 +796,13 @@ async def bid(ctx, *args):
         await ctx.send("No auction is currently running in this channel.")
         return
     
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
+    
     # Handle custom bid for a new player (e.g., !bid "Player Name" 10m)
     if len(args) >= 2:
         if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-            await ctx.send("Only the auction host or the privileged user can start a custom player auction.")
+            await ctx.send("Only the auction host can start a custom player auction.")
             return
         
         if auction_state['bidding'] or auction_state['current_player']:
@@ -992,8 +1053,11 @@ async def rebid(ctx):
         return
 
     if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can use this command in this auction.")
+        await ctx.send("Only the auction host can use this command in this auction.")
         return
+    
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
     
     if auction_state['bidding'] or auction_state['current_player']:
         await ctx.send("A player is currently being auctioned. Please wait until the current auction ends.")
@@ -1069,15 +1133,18 @@ async def rebid(ctx):
 
 @bot.command()
 async def sold(ctx):
-    """Manually sells the current player to the highest bidder (host or privileged user only)."""
+    """Manually sells the current player to the highest bidder."""
     auction_state = active_auctions.get(ctx.channel.id)
     if not auction_state:
         await ctx.send("No auction is currently running in this channel.")
         return
 
     if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can use this command in this auction.")
+        await ctx.send("Only the auction host can use this command in this auction.")
         return
+    
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
     
     if not auction_state['bidding'] or not auction_state['current_player']:
         await ctx.send("No player is currently being auctioned in this channel.")
@@ -1092,7 +1159,14 @@ async def sold(ctx):
 async def status(ctx):
     """Displays the current auction status."""
     auction_state = active_auctions.get(ctx.channel.id)
-    if not auction_state or not auction_state['bidding'] or not auction_state['current_player']:
+    if not auction_state:
+        await ctx.send("No auction is currently running in this channel.")
+        return
+    
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
+    
+    if not auction_state['bidding'] or not auction_state['current_player']:
         await ctx.send("⚠️ No player is currently being auctioned in this channel.")
         return
     
@@ -1112,15 +1186,18 @@ async def status(ctx):
 
 @bot.command()
 async def unsold(ctx):
-    """Marks the current player as unsold (host or privileged user only)."""
+    """Marks the current player as unsold."""
     auction_state = active_auctions.get(ctx.channel.id)
     if not auction_state:
         await ctx.send("No auction is currently running in this channel.")
         return
 
     if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can use this command in this auction.")
+        await ctx.send("Only the auction host can use this command in this auction.")
         return
+    
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
     
     if not auction_state['bidding'] or not auction_state['current_player']:
         await ctx.send("No player is currently being auctioned in this channel.")
@@ -1147,6 +1224,9 @@ async def myplayers(ctx):
         await ctx.send("You haven't bought any players yet.")
         return
     
+    if ctx.channel.id in active_auctions and active_auctions[ctx.channel.id]['host'] == ctx.author.id:
+        active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
+    
     team = user_teams[user_id]
     embed = discord.Embed(title=f"📋 {ctx.author.display_name}'s Players", color=discord.Color.teal())
     
@@ -1163,6 +1243,10 @@ async def budget(ctx):
     """Displays the remaining budget of the command issuer."""
     user_id = str(ctx.author.id)
     budget = user_budgets.get(user_id, STARTING_BUDGET)
+    
+    if ctx.channel.id in active_auctions and active_auctions[ctx.channel.id]['host'] == ctx.author.id:
+        active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
+    
     await ctx.send(f"💰 Your remaining budget: {format_currency(budget)}")
 
 def calculate_team_score_based_on_lineup(user_id):
@@ -1347,15 +1431,18 @@ def simulate_match(team1_id, team2_id, team1, team2):
 
 @bot.command()
 async def battle(ctx, team1: discord.Member, team2: discord.Member):
-    """Simulates a football match between two participants' lineups (host or privileged user only)."""
+    """Simulates a football match between two participants' lineups."""
     auction_state = active_auctions.get(ctx.channel.id)
     if not auction_state:
         await ctx.send("No auction is currently running in this channel, so battle commands are not available here.")
         return
 
     if ctx.author.id != auction_state['host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send("Only the auction host or the privileged user can run this command in this auction.")
+        await ctx.send("Only the auction host can run this command in this auction.")
         return
+    
+    if auction_state['host'] == ctx.author.id:
+        auction_state['last_host_activity'] = time.time()
     
     team1_id = str(team1.id)
     team2_id = str(team2.id)
@@ -1420,6 +1507,9 @@ async def rankteams(ctx):
         await ctx.send("No teams have been formed yet to rank.")
         return
 
+    if ctx.channel.id in active_auctions and active_auctions[ctx.channel.id]['host'] == ctx.author.id:
+        active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
+    
     team_scores = []
     for user_id, team_players in user_teams.items():
         if team_players:
