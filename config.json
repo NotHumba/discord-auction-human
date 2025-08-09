@@ -1,0 +1,7 @@
+{
+  "enable_tournament": true,
+  "enable_trades": true,
+  "enable_achievements": true,
+  "enable_friendly": true,
+  "enable_match_images": true
+}
