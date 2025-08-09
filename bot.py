@@ -1632,23 +1632,46 @@ async def footy(ctx):
     embed = discord.Embed(title="📘 Football Auction Bot Help", 
                          description="Here are the available commands:", 
                          color=discord.Color.blue())
+
     embed.add_field(name="🟢 !startauction @user1 @user2 ...", 
+                   value="Start a new auction with the mentioned participants.", inline=False)
     embed.add_field(name="🎯 !sets", 
                    value="Show all available auction sets.", inline=False)
     embed.add_field(name="👤 !participants", 
+                   value="List all registered participants in the current auction.", inline=False)
     embed.add_field(name="➕ !add @user", 
+                   value="Add a new participant to the ongoing auction.", inline=False)
     embed.add_field(name="➖ !remove @user", 
+                   value="Remove a participant from the ongoing auction.", inline=False)
     embed.add_field(name="⚽ !st / !rw / !lw / !cam / !cm / !lb / !cb / !rb / !gk", 
+                   value="Start auctioning a player for the specified position.", inline=False)
     embed.add_field(name="💸 !bid / !bid [amount]", 
+                   value="Place a bid on the current player.", inline=False)
     embed.add_field(name="✅ !sold", 
+                   value="Manually sell the current player to the highest bidder.", inline=False)
     embed.add_field(name="🚫 !unsold", 
+                   value="Mark the current player as unsold.", inline=False)
     embed.add_field(name="📊 !status", 
+                   value="Show the current auction status.", inline=False)
     embed.add_field(name="📁 !myplayers", 
+                   value="View the list of players you own.", inline=False)
     embed.add_field(name="⚽ !setlineup", 
+                   value="Set your team’s lineup and tactics.", inline=False)
     embed.add_field(name="📋 !viewlineup", 
+                   value="View your current lineup.", inline=False)
     embed.add_field(name="⚽ !battle @user1 @user2", 
+                   value="Simulate a match between two teams.", inline=False)
     embed.add_field(name="🏆 !rankteams", 
+                   value="Rank all participant teams based on lineup strength.", inline=False)
+    embed.add_field(name="🔄 !trade @user Player1 for Player2", 
+                   value="Trade players with another manager.", inline=False)
+    embed.add_field(name="🏟️ !tournament", 
+                   value="Start a round-robin league with all teams.", inline=False)
+    embed.add_field(name="📈 !mystats", 
+                   value="View your stats, money spent, and most expensive player.", inline=False)
     embed.add_field(name="🔚 !endauction", 
+                   value="End the current auction.", inline=False)
+
     await ctx.send(embed=embed)
 
 import os
