@@ -1633,37 +1633,22 @@ async def footy(ctx):
                          description="Here are the available commands:", 
                          color=discord.Color.blue())
     embed.add_field(name="🟢 !startauction @user1 @user2 ...", 
-                   value="Start an auction in the current channel and register players. Host and participants must not be in another auction.", inline=False)
     embed.add_field(name="🎯 !sets", 
                    value="Show all available auction sets.", inline=False)
     embed.add_field(name="👤 !participants", 
-                   value="Show all registered participants and current set for *this channel's auction*.", inline=False)
     embed.add_field(name="➕ !add @user", 
-                   value=f"Add a participant to *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only). User must not be in another auction.", inline=True)
     embed.add_field(name="➖ !remove @user", 
-                   value=f"Remove a participant from *this channel's auction* with confirmation (host or <@{PRIVILEGED_USER_ID}> only).", inline=True)
     embed.add_field(name="⚽ !st / !rw / !lw / !cam / !cm / !lb / !cb / !rb / !gk", 
-                   value=f"Start auction for a player from that position in *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only). Players are auctioned in order: 3 A-tier (40-50M), 5 B-tier (25-39M), 3 C-tier (1-24M), repeating.", inline=False)
     embed.add_field(name="💸 !bid / !bid [amount]", 
-                   value="Place a bid in *this channel's auction*.", inline=False)
     embed.add_field(name="✅ !sold", 
-                   value=f"Sell current player to the highest bidder in *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only).", inline=False)
     embed.add_field(name="🚫 !unsold", 
-                   value=f"Mark current player as unsold in *this channel's auction* (host or <@{PRIVILEGED_USER_ID}> only).", inline=False)
     embed.add_field(name="📊 !status", 
-                   value="Check current auction status in *this channel*.", inline=False)
     embed.add_field(name="📁 !myplayers", 
-                   value="View your bought players (global to you).", inline=False)
     embed.add_field(name="⚽ !setlineup", 
-                   value="Interactively set your lineup (global to you).", inline=False)
     embed.add_field(name="📋 !viewlineup", 
-                   value="View your current lineup (global to you).", inline=False)
     embed.add_field(name="⚽ !battle @user1 @user2", 
-                   value=f"Simulate a match between two participants' lineups (host or <@{PRIVILEGED_USER_ID}> only, for *this channel's auction*).", inline=False)
     embed.add_field(name="🏆 !rankteams", 
-                   value="Rank all participant teams based on lineup composition (global rankings).", inline=False)
     embed.add_field(name="🔚 !endauction", 
-                   value=f"End the auction in *this channel* and reset its specific state and participant data (host or <@{PRIVILEGED_USER_ID}> only).", inline=False)
     await ctx.send(embed=embed)
 
 import os
