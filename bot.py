@@ -58,6 +58,10 @@ lineup_setup_state = {
 user_teams = {}
 user_budgets = {}
 user_lineups = {}
+user_stats = {}          # new: tracks wins/losses/draws/money_spent/most_expensive/trades_made
+tournaments = {}        # new: running tournaments (kept in-memory + saved)
+pending_trades = {}     # new: trade proposals {trade_id: {...}}
+
 STARTING_BUDGET = 1000000000
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -131,43 +135,69 @@ def load_players_by_position(position, set_name):
         return {'A': [], 'B': [], 'C': []}
 
 def save_data():
-    """Saves user teams, budgets, and lineups to JSON files."""
+    """Saves user teams, budgets, lineups, stats, and tournaments to JSON files."""
     try:
         os.makedirs(DATA_DIR, exist_ok=True)
-        with open(os.path.join(DATA_DIR, "teams.json"), "w") as f:
+        with open(os.path.join(DATA_DIR, "teams.json"), "w", encoding='utf-8') as f:
             json.dump(user_teams, f, indent=2)
-        with open(os.path.join(DATA_DIR, "budgets.json"), "w") as f:
+        with open(os.path.join(DATA_DIR, "budgets.json"), "w", encoding='utf-8') as f:
             json.dump(user_budgets, f, indent=2)
-        with open(os.path.join(DATA_DIR, "lineups.json"), "w") as f:
+        with open(os.path.join(DATA_DIR, "lineups.json"), "w", encoding='utf-8') as f:
             json.dump(user_lineups, f, indent=2)
+        with open(os.path.join(DATA_DIR, "stats.json"), "w", encoding='utf-8') as f:
+            json.dump(user_stats, f, indent=2)
+        with open(os.path.join(DATA_DIR, "tournaments.json"), "w", encoding='utf-8') as f:
+            json.dump(tournaments, f, indent=2)
     except Exception as e:
         print(f"Error saving data: {e}")
         return False
     return True
 
 def load_data():
-    """Loads user teams, budgets, and lineups from JSON files."""
-    global user_teams, user_budgets, user_lineups
+    """Loads user teams, budgets, lineups, stats, and tournaments from JSON files."""
+    global user_teams, user_budgets, user_lineups, user_stats, tournaments
     try:
         os.makedirs(DATA_DIR, exist_ok=True)
         teams_path = os.path.join(DATA_DIR, "teams.json")
         budgets_path = os.path.join(DATA_DIR, "budgets.json")
         lineups_path = os.path.join(DATA_DIR, "lineups.json")
+        stats_path = os.path.join(DATA_DIR, "stats.json")
+        tournaments_path = os.path.join(DATA_DIR, "tournaments.json")
         if os.path.exists(teams_path):
-            with open(teams_path, "r") as f:
+            with open(teams_path, "r", encoding='utf-8') as f:
                 user_teams = json.load(f)
         if os.path.exists(budgets_path):
-            with open(budgets_path, "r") as f:
+            with open(budgets_path, "r", encoding='utf-8') as f:
                 user_budgets = json.load(f)
         if os.path.exists(lineups_path):
-            with open(lineups_path, "r") as f:
+            with open(lineups_path, "r", encoding='utf-8') as f:
                 user_lineups = json.load(f)
+        if os.path.exists(stats_path):
+            with open(stats_path, "r", encoding='utf-8') as f:
+                user_stats = json.load(f)
+        if os.path.exists(tournaments_path):
+            with open(tournaments_path, "r", encoding='utf-8') as f:
+                tournaments = json.load(f)
     except Exception as e:
         print(f"Error loading data: {e}")
         return False
     return True
 
 load_data()
+
+def ensure_user_structures(user_id_str):
+    """Ensure minimal user keys exist across structures."""
+    if user_id_str not in user_budgets:
+        user_budgets[user_id_str] = STARTING_BUDGET
+    if user_id_str not in user_teams:
+        user_teams[user_id_str] = []
+    if user_id_str not in user_lineups:
+        user_lineups[user_id_str] = {'players': [], 'tactic': 'Balanced', 'formation': '4-4-2'}
+    if user_id_str not in user_stats:
+        user_stats[user_id_str] = {
+            'wins': 0, 'losses': 0, 'draws': 0,
+            'money_spent': 0, 'most_expensive': 0, 'trades_made': 0
+        }
 
 def is_user_in_any_auction(user_id):
     user_id_str = str(user_id)
@@ -516,12 +546,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         auction_state['participants'].add(str(m.id))
     
     for participant_id in auction_state['participants']:
-        if participant_id not in user_budgets:
-            user_budgets[participant_id] = STARTING_BUDGET
-        if participant_id not in user_teams:
-            user_teams[participant_id] = []
-        if participant_id not in user_lineups:
-            user_lineups[participant_id] = {'players': [], 'tactic': 'Balanced', 'formation': '4-4-2'}
+        ensure_user_structures(participant_id)
     
     embed = discord.Embed(title="🎯 Select Auction Set", 
                          description="Please choose which set you want to auction:", 
@@ -599,12 +624,7 @@ async def add(ctx, member: discord.Member):
         return
 
     auction_state['participants'].add(str(member.id))
-    if str(member.id) not in user_budgets:
-        user_budgets[str(member.id)] = STARTING_BUDGET
-    if str(member.id) not in user_teams:
-        user_teams[str(member.id)] = []
-    if str(member.id) not in user_lineups:
-        user_lineups[str(member.id)] = {'players': [], 'tactic': 'Balanced', 'formation': '4-4-2'}
+    ensure_user_structures(str(member.id))
     
     await ctx.send(f"✅ {member.mention} has been added to this auction.")
 
@@ -914,10 +934,7 @@ async def bid(ctx, *args):
         await ctx.send("You are not a registered participant in this auction.")
         return
     
-    if user_id not in user_budgets:
-        user_budgets[user_id] = STARTING_BUDGET
-        user_teams[user_id] = []
-        user_lineups[user_id] = {'players': [], 'tactic': 'Balanced', 'formation': '4-4-2'}
+    ensure_user_structures(user_id)
     
     if len(user_teams[user_id]) >= MAX_PLAYERS_PER_USER:
         await ctx.send(f"You have reached the {MAX_PLAYERS_PER_USER}-player limit for your team.")
@@ -1014,15 +1031,26 @@ async def _finalize_sold(ctx):
     except:
         winner_name = f"User {winner_id}"
 
+    # Deduct budget and add player
     user_budgets[winner_id] -= price
-    user_teams[winner_id].append({
+    entry = {
         "name": player['name'],
-        "position": player['position'],
+        "position": player.get('position', 'unknown'),
         "league": player.get('league', 'Unknown'),
         "price": price,
         "set": available_sets.get(auction_state['current_set'], 'Unknown Set'),
-        "tier": player['tier']
-    })
+        "tier": player.get('tier', 'C')
+    }
+    user_teams[winner_id].append(entry)
+
+    # Update stats: money spent and most expensive
+    ensure_user_structures(winner_id)
+    try:
+        user_stats[winner_id]['money_spent'] = user_stats[winner_id].get('money_spent', 0) + price
+        if price > user_stats[winner_id].get('most_expensive', 0):
+            user_stats[winner_id]['most_expensive'] = price
+    except Exception as e:
+        print(f"Error updating stats for user {winner_id}: {e}")
 
     auction_state['last_sold_player'] = player
     auction_state['last_sold_buyer_id'] = winner_id
@@ -1078,6 +1106,11 @@ async def rebid(ctx):
     # Update lineup if the player was in it
     if buyer_id in user_lineups and user_lineups[buyer_id]['players']:
         user_lineups[buyer_id]['players'] = [p for p in user_lineups[buyer_id]['players'] if p['name'] != player['name']]
+    
+    # Update stats for refund: reduce money_spent if possible (keeps simple)
+    ensure_user_structures(buyer_id)
+    user_stats[buyer_id]['money_spent'] = max(0, user_stats[buyer_id].get('money_spent', 0) - price)
+    # Note: not rolling back most_expensive for simplicity
     
     if not save_data():
         await ctx.send("⚠️ Error saving data. Rebid proceeding, but data may not persist.")
