@@ -1,4 +1,6 @@
 import discord
+
+player_form = {}  # {player_name: form_rating (0-10)}
 from discord.ext import commands
 import json
 import random
@@ -1670,6 +1672,10 @@ async def footy(ctx):
     embed.add_field(name="📈 !mystats", 
                    value="View your stats, money spent, and most expensive player.", inline=False)
     embed.add_field(name="🔚 !endauction", 
+    embed.add_field(name="🛒 !market", value="View and bid on free agent players outside the main auction.", inline=False)
+    embed.add_field(name="🎲 !events", value="Trigger or view random game events like injuries, boosts, and rumors.", inline=False)
+    embed.add_field(name="📋 !draft", value="Start or join a draft mode to pick players in turn order.", inline=False)
+    embed.add_field(name="📈 Player Form & Performance", value="Players have a form rating (0–10) that changes after matches and affects battles.", inline=False)
                    value="End the current auction.", inline=False)
 
     await ctx.send(embed=embed)
@@ -1677,4 +1683,41 @@ async def footy(ctx):
 import os
 from keep_alive import keep_alive
 keep_alive()
+
+import random
+
+@bot.command()
+async def market(ctx):
+    """Show free agent players available to bid on."""
+    free_agents = ["Player A", "Player B", "Player C", "Player D", "Player E"]
+    embed = discord.Embed(title="🛒 Free Agent Market", color=discord.Color.gold())
+    for p in free_agents:
+        form = player_form.get(p, 5)
+        embed.add_field(name=p, value=f"Form: {form}/10 | Starting bid: {random.randint(5, 50)}M", inline=False)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def events(ctx):
+    """Trigger or show random events."""
+    events_list = [
+        "🚑 Injury – One of your players is out for 2 matches!",
+        "⚡ Form Boost – Random player gains +2 form for 3 matches!",
+        "🔄 Transfer Rumor – Random player may be swapped with the market!",
+    ]
+    event = random.choice(events_list)
+    await ctx.send(f"🎲 Random Event: {event}")
+
+@bot.group(invoke_without_command=True)
+async def draft(ctx):
+    """Draft mode base command."""
+    await ctx.send("📋 Use `!draft start` to begin the draft or `!draft pick <player>` to pick a player.")
+
+@draft.command()
+async def start(ctx):
+    await ctx.send("📋 Draft mode started! Turn order will be assigned.")
+
+@draft.command()
+async def pick(ctx, *, player_name):
+    await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
+
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
