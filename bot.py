@@ -1672,6 +1672,7 @@ async def footy(ctx):
     embed.add_field(name="📈 !mystats", 
                    value="View your stats, money spent, and most expensive player.", inline=False)
     embed.add_field(name="🔚 !endauction", 
+                    value="End the current auction.", inline=False)
     embed.add_field(name="🛒 !market", 
                    value="View and bid on free agent players outside the main auction.", inline=False)
     embed.add_field(name="🎲 !events",
@@ -1680,8 +1681,7 @@ async def footy(ctx):
                     value="Start or join a draft mode to pick players in turn order.", inline=False)
     embed.add_field(name="📈 Player Form & Performance", 
                     value="Players have a form rating (0–10) that changes after matches and affects battles.", inline=False)
-                   value="End the current auction.", inline=False)
-
+                   
     await ctx.send(embed=embed)
 
 import os
