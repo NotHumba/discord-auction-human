@@ -845,23 +845,38 @@ async def end(ctx, league_key: str):
     save_guild_state(guild_id, data)
     await ctx.send(f"🗑️ League {league_key} ended and removed.")
 
-# ---------------- Help command ----------------
+# ---------------- Help ----------------
 @bot.command()
 async def helpme(ctx):
     embed = discord.Embed(title="🤖 Bot Help", color=discord.Color.green())
-    embed.add_field(name="Auctions", value="!startauction, !st, !rw, !bid, !sold, !rebid, !setlineup, !viewlineup, !myplayers, !budget", inline=False)
-    embed.add_field(name="Manager Mode", value="Use !manager for manager help. Key: create, single, play, table, offer, offers (DM), accept (DM), decline (DM), cup", inline=False)
-    embed.add_field(name="Draft", value="!draft start | !draft pick | !draft end", inline=False)
+    embed.add_field(
+        name="Auctions",
+        value="!startauction, !st, !rw, !bid, !sold, !rebid, !setlineup, !viewlineup, !myplayers, !budget",
+        inline=False
+    )
+    embed.add_field(
+        name="Draft",
+        value="!draft start | !draft pick | !draft end",
+        inline=False
+    )
+    embed.add_field(
+        name="Manager Mode",
+        value=(
+            "!manager create <league_key> <name> <@mentions>\n"
+            "!manager single <league_key> <name> <ai_count>\n"
+            "!manager autosquad <league_key>\n"
+            "!manager play <league_key>\n"
+            "!manager table <league_key>\n"
+            "!manager offer <league_key> <@to> <player> <fee>\n"
+            "!manager offers <league_key>\n"
+            "!manager accept/decline <league_key> <offer_id>\n"
+            "!manager cup <action> <league_key>\n"
+            "!manager end <league_key>"
+        ),
+        inline=False
+    )
     await ctx.send(embed=embed)
 
-# ---------------- Run ----------------
-@bot.command()
-async def helpme(ctx):
-    embed = discord.Embed(title="🤖 Bot Help", color=discord.Color.green())
-    embed.add_field(name="Auctions", value="!startauction, !st, !rw, !bid, !sold, !rebid, !setlineup, !viewlineup, !myplayers, !budget", inline=False)
-    embed.add_field(name="Draft", value="!draft start | !draft pick | !draft end", inline=False)
-    embed.add_field(name="Manager Mode", value="!manager create/single/play/table/offer/offers/accept/decline/cup", inline=False)
-    await ctx.send(embed=embed)
 
 # ---------------- Run ----------------
 if __name__ == "__main__":
