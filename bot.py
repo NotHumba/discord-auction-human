@@ -471,7 +471,10 @@ def ai_transfer_window(league):
 # ---------------- Manager subcommands (continued) ----------------
 # Note: many commands use the guild-specific persistence file to read/save league state.
 
-@manager.command()
+async def manager(ctx):
+    """Manager Mode command group."""
+    if ctx.invoked_subcommand is None:
+        await ctx.send("Use !manager help for options.")
 async def create(ctx, league_key: str, *, rest: str):
     guild_id = str(ctx.guild.id)
     data = load_guild_state(guild_id)
