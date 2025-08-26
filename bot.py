@@ -497,7 +497,12 @@ async def create(ctx, league_key: str, *, rest: str):
     save_guild_state(guild_id, data)
     await ctx.send(f"✅ League **{league_name}** created with key `{league_key}`. Use !manager autosquad or provide real data to populate squads.")
 
-@manager.command()
+@bot.group()
+async def manager(ctx):
+    """Manager Mode command group."""
+    if ctx.invoked_subcommand is None:
+        await ctx.send("Use !manager help for options.")
+
 async def single(ctx, league_key: str, league_name: str, ai_count: int = 5, use_real_data: str = 'false'):
     guild_id = str(ctx.guild.id)
     data = load_guild_state(guild_id)
