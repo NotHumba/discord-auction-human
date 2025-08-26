@@ -888,8 +888,8 @@ async def helpme(ctx):
 
 # ---------------- Run ----------------
 if __name__ == "__main__":
-    token = os.environ.get("DISCORD_TOKEN")
+    token = os.environ.get("DISCORD_BOT_TOKEN")
     if not token:
-        print("Set DISCORD_TOKEN environment variable to run the bot.")
+        print("Set DISCORD_BOT_TOKEN environment variable to run the bot.")
     else:
         bot.run(token)
