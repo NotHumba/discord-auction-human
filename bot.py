@@ -153,6 +153,17 @@ def save_data():
     except Exception as e:
         print(f"Error saving data: {e}")
         return False
+    # --- Extra gamemodes persistence (added by patch) ---
+    try:
+        with open(os.path.join(DATA_DIR, "koth.json"), "w", encoding='utf-8') as f:
+            json.dump(koth_state, f, indent=2)
+        with open(os.path.join(DATA_DIR, "draftclash.json"), "w", encoding='utf-8') as f:
+            json.dump(draft_clash_sessions, f, indent=2)
+        with open(os.path.join(DATA_DIR, "mystery_boxes.json"), "w", encoding='utf-8') as f:
+            json.dump(mystery_boxes, f, indent=2)
+    except Exception as e:
+        print(f"Error saving extra data: {e}")
+
     return True
 
 def load_data():
@@ -183,6 +194,29 @@ def load_data():
     except Exception as e:
         print(f"Error loading data: {e}")
         return False
+    # --- Load extra gamemodes persistence (added by patch) ---
+    try:
+        koth_path = os.path.join(DATA_DIR, "koth.json")
+        if os.path.exists(koth_path):
+            with open(koth_path, "r", encoding='utf-8') as f:
+                tmp = json.load(f)
+                if isinstance(tmp, dict):
+                    koth_state.update(tmp)
+        dc_path = os.path.join(DATA_DIR, "draftclash.json")
+        if os.path.exists(dc_path):
+            with open(dc_path, "r", encoding='utf-8') as f:
+                tmp = json.load(f)
+                if isinstance(tmp, dict):
+                    draft_clash_sessions.update(tmp)
+        mb_path = os.path.join(DATA_DIR, "mystery_boxes.json")
+        if os.path.exists(mb_path):
+            with open(mb_path, "r", encoding='utf-8') as f:
+                tmp = json.load(f)
+                if isinstance(tmp, dict):
+                    mystery_boxes.update(tmp)
+    except Exception as e:
+        print(f"Error loading extra data: {e}")
+
     return True
 
 load_data()
@@ -1727,3 +1761,375 @@ async def pick(ctx, *, player_name):
     await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
+
+
+
+# -------------------- Added Gamemodes: KoTH, Draft Clash, Mystery Box --------------------
+# Note: Integrates with user_teams, user_budgets, user_lineups, user_stats, save_data(), load_data(), ensure_user_structures(), simulate_match().
+
+koth_state = {
+    'current_king_id': None,
+    'king_streak': 0,
+    'longest_reigns': {},
+    'history': []
+}
+
+draft_clash_sessions = {}
+mystery_boxes = {}
+
+draft_clash_wins = {}
+mystery_wins = {}
+
+
+# -------------------- KoTH --------------------
+@bot.command()
+async def kingstatus(ctx):
+    if koth_state['current_king_id'] is None:
+        await ctx.send("👑 There is currently no King. Use `!challenge` to claim the throne!")
+        return
+    king_id = koth_state['current_king_id']
+    streak = koth_state.get('king_streak', 0)
+    longest = koth_state['longest_reigns'].get(str(king_id), 0)
+    embed = discord.Embed(title="👑 King of the Hill", color=discord.Color.gold())
+    embed.add_field(name="Current King", value=f"<@{king_id}>", inline=True)
+    embed.add_field(name="Streak", value=str(streak), inline=True)
+    embed.add_field(name="Best", value=str(longest), inline=True)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def kothleaderboard(ctx):
+    if not koth_state['longest_reigns']:
+        await ctx.send("No KoTH data yet.")
+        return
+    items = sorted(koth_state['longest_reigns'].items(), key=lambda x: x[1], reverse=True)[:10]
+    desc = "\n".join([f"<@{uid}> — {streak} defenses" for uid, streak in items])
+    embed = discord.Embed(title="🏆 KoTH Leaderboard", description=desc, color=discord.Color.purple())
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def forfeit(ctx):
+    uid = str(ctx.author.id)
+    if koth_state['current_king_id'] != uid:
+        await ctx.send("You are not the King.")
+        return
+    # end reign
+    koth_state['history'].append({'user_id': uid, 'end_ts': time.time(), 'streak': koth_state.get('king_streak',0)})
+    koth_state['current_king_id'] = None
+    koth_state['king_streak'] = 0
+    save_data()
+    await ctx.send(f"👑 <@{uid}> has stepped down. The hill is open.")
+
+@bot.command()
+async def challenge(ctx):
+    challenger = str(ctx.author.id)
+    ensure_user_structures(challenger)
+    if koth_state['current_king_id'] is None:
+        koth_state['current_king_id'] = challenger
+        koth_state['king_streak'] = 0
+        koth_state['history'].append({'user_id': challenger, 'start_ts': time.time(), 'end_ts': None, 'streak': 0})
+        save_data()
+        await ctx.send(f"👑 {ctx.author.display_name} claimed the throne!")
+        return
+    king = koth_state['current_king_id']
+    if king == challenger:
+        await ctx.send("You are already the King.")
+        return
+    if challenger not in user_teams or not user_teams[challenger]:
+        await ctx.send("You have no players to challenge with.")
+        return
+    if king not in user_teams or not user_teams[king]:
+        # king has no players, takeover
+        koth_state['current_king_id'] = challenger
+        koth_state['king_streak'] = 0
+        koth_state['history'].append({'user_id': challenger, 'start_ts': time.time(), 'end_ts': None, 'streak': 0})
+        save_data()
+        await ctx.send(f"👑 {ctx.author.display_name} takes the throne as the King had no players.")
+        return
+
+    # prepare display-like objects
+    async def _get_display_obj(uid):
+        try:
+            member = ctx.guild.get_member(int(uid))
+            if member: return member
+            u = await bot.fetch_user(int(uid))
+            class L: pass
+            o = L(); o.display_name = getattr(u, "display_name", getattr(u, "name", str(u))); return o
+        except:
+            class L: pass
+            o = L(); o.display_name = f"User {uid}"; return o
+
+    king_obj = await _get_display_obj(king)
+    challenger_obj = await _get_display_obj(challenger)
+
+    scoreline, narrative, scores = simulate_match(challenger, king, challenger_obj, king_obj)
+    if scoreline is None:
+        await ctx.send(narrative); return
+
+    a_goals, b_goals = scoreline
+    embed = discord.Embed(title="⚔️ KoTH Challenge", color=discord.Color.blue())
+    embed.add_field(name="Match", value=f"{ctx.author.display_name} vs <@{king}>", inline=False)
+    embed.add_field(name="Score", value=f"{a_goals} - {b_goals}", inline=False)
+    embed.add_field(name="Summary", value=narrative or "No events", inline=False)
+    await ctx.send(embed=embed)
+
+    if a_goals > b_goals:
+        # challenger wins
+        prev = koth_state['current_king_id']
+        prev_streak = koth_state.get('king_streak', 0)
+        if prev:
+            koth_state['history'].append({'user_id': prev, 'end_ts': time.time(), 'streak': prev_streak})
+            koth_state['longest_reigns'][str(prev)] = max(koth_state['longest_reigns'].get(str(prev),0), prev_streak)
+        koth_state['current_king_id'] = challenger
+        koth_state['king_streak'] = 1
+        koth_state['history'].append({'user_id': challenger, 'start_ts': time.time(), 'end_ts': None, 'streak': 0})
+        ensure_user_structures(challenger)
+        user_stats[challenger]['wins'] = user_stats[challenger].get('wins',0) + 1
+        await ctx.send(f"👑 {ctx.author.mention} dethroned <@{prev}> and is the new King!")
+    elif b_goals > a_goals:
+        # king defends
+        koth_state['king_streak'] = koth_state.get('king_streak',0) + 1
+        ensure_user_structures(challenger)
+        user_stats[challenger]['losses'] = user_stats[challenger].get('losses',0) + 1
+        await ctx.send(f"🛡️ <@{king}> defended the throne! Current streak: {koth_state['king_streak']}")
+    else:
+        ensure_user_structures(challenger)
+        user_stats[challenger]['draws'] = user_stats[challenger].get('draws',0) + 1
+        await ctx.send("It's a draw — no change to the throne.")
+
+    save_data()
+
+# -------------------- Draft Clash --------------------
+import random as _r
+
+def _build_pool(set_key='24-25', size=60):
+    base_dir = os.path.dirname(__file__)
+    pool = []
+    for pos in available_positions:
+        path = os.path.join(base_dir, 'players', set_key, f'{pos}.json')
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    arr = json.load(f)
+                    for it in arr:
+                        pool.append(it)
+            except:
+                pass
+    if not pool:
+        for uid, team in user_teams.items():
+            for p in team:
+                pool.append(p)
+    _r.shuffle(pool)
+    return pool[:size]
+
+@bot.command()
+async def draftclash(ctx, action: str = None):
+    ch = ctx.channel.id
+    if action is None:
+        await ctx.send("Usage: !draftclash start|join|begin|status|pick <1-3>")
+        return
+    action = action.lower()
+    if action == 'start':
+        if ch in draft_clash_sessions and draft_clash_sessions[ch].get('state') in ('lobby','drafting'):
+            await ctx.send("A draft is already in this channel.")
+            return
+        draft_clash_sessions[ch] = {'host': str(ctx.author.id), 'players':[str(ctx.author.id)], 'state':'lobby','round':0,'picks':{}, 'available_pool':[], 'set_key': None, 'max_players':4}
+        save_data()
+        await ctx.send(f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start.")
+        return
+    session = draft_clash_sessions.get(ch)
+    if not session:
+        await ctx.send("No active draft lobby. Start with `!draftclash start`.")
+        return
+    if action == 'join':
+        if session['state'] != 'lobby': await ctx.send("Draft already in progress."); return
+        if len(session['players']) >= session['max_players']: await ctx.send("Lobby full."); return
+        if str(ctx.author.id) in session['players']: await ctx.send("You already joined."); return
+        session['players'].append(str(ctx.author.id)); save_data(); await ctx.send(f"{ctx.author.mention} joined the draft ({len(session['players'])}/{session['max_players']})."); return
+    if action == 'begin':
+        if str(ctx.author.id) != session['host']: await ctx.send("Only host can begin."); return
+        # optional set key
+        parts = ctx.message.content.strip().split()
+        set_key = None
+        if len(parts) > 2: set_key = parts[2].strip().lower()
+        session['set_key'] = set_key or '24-25'
+        session['state'] = 'drafting'
+        session['round'] = 1
+        session['picks'] = {uid: [] for uid in session['players']}
+        session['available_pool'] = _build_pool(session['set_key'], size=60)
+        await _draft_offer(ctx, session); save_data(); return
+    if action == 'status':
+        await ctx.send(f"Draft status: {session['state']}, players: {', '.join(session['players'])}, round: {session['round']}"); return
+    if action == 'pick':
+        parts = ctx.message.content.strip().split()
+        if len(parts) < 3: await ctx.send("Use `!draftclash pick <1|2|3>`"); return
+        try: idx = int(parts[2]); assert idx in (1,2,3)
+        except: await ctx.send("Choice must be 1,2 or 3"); return
+        await _draft_pick(ctx, session, idx-1); save_data(); return
+    await ctx.send("Unknown action for draftclash.")
+
+async def _draft_offer(ctx, session):
+    players = session['players']; round_no = session['round']
+    order = players if round_no % 2 == 1 else list(reversed(players))
+    for uid in order:
+        if len(session['picks'].get(uid, [])) < round_no:
+            pool = session['available_pool']
+            choices = []
+            for _ in range(3):
+                if not pool: break
+                choices.append(pool.pop(0))
+            if not choices:
+                session['state'] = 'completed'; await ctx.send("Pool exhausted; draft ended."); return
+            session.setdefault('current_offer', {})[uid] = choices
+            embed = discord.Embed(title=f"Draft Round {round_no} — Pick for <@{uid}>", color=discord.Color.blue())
+            for i,p in enumerate(choices, start=1):
+                embed.add_field(name=f"{i}. {p.get('name','Unknown')}", value=f"{p.get('position','?').upper()} - {p.get('league','?')}", inline=False)
+            embed.set_footer(text="Type `!draftclash pick <1|2|3>`")
+            await ctx.send(embed=embed); return
+    session['round'] += 1
+    if session['round'] > 11:
+        session['state'] = 'completed'; await ctx.send("Draft complete! Running knockout..."); await _draft_run_knockout(ctx, session); return
+    await _draft_offer(ctx, session)
+
+async def _draft_pick(ctx, session, idx):
+    uid = str(ctx.author.id)
+    if 'current_offer' not in session or uid not in session['current_offer']: await ctx.send("No offer."); return
+    choices = session['current_offer'].pop(uid)
+    if idx < 0 or idx >= len(choices): await ctx.send("Invalid index"); return
+    picked = choices[idx]
+    session['picks'].setdefault(uid, []).append(picked)
+    await ctx.send(f"{ctx.author.mention} picked **{picked.get('name','Unknown')}** for round {session['round']}")
+    await _draft_offer(ctx, session)
+
+async def _draft_run_knockout(ctx, session):
+    players = session['players'][:]
+    for uid in players:
+        picks = session['picks'].get(uid, [])
+        lineup = picks[:11]
+        if len(lineup) < 11:
+            extra = user_teams.get(uid, [])[:11-len(lineup)]; lineup.extend(extra)
+        user_lineups[uid] = {'players': lineup, 'tactic':'Balanced', 'formation':'4-4-2'}
+    bracket = players[:]; _r.shuffle(bracket)
+    round_no = 1
+    while len(bracket) > 1:
+        nxt = []
+        for i in range(0, len(bracket), 2):
+            if i+1 >= len(bracket): nxt.append(bracket[i]); continue
+            a = bracket[i]; b = bracket[i+1]
+            class L: pass
+            ma = L(); ma.display_name = (await bot.fetch_user(int(a))).name
+            mb = L(); mb.display_name = (await bot.fetch_user(int(b))).name
+            res = simulate_match(a, b, ma, mb)
+            if isinstance(res, tuple):
+                scoreline, narrative, scores = res
+                if scoreline[0] >= scoreline[1]: winner = a
+                else: winner = b
+            else:
+                winner = a
+            nxt.append(winner)
+            await ctx.send(f"Round {round_no}: <@{a}> vs <@{b}> — Winner: <@{winner}>")
+        bracket = nxt; round_no += 1
+    champ = bracket[0] if bracket else None
+    if champ: await ctx.send(f"🏁 Draft Clash Champion: <@{champ}>")
+    draft_clash_wins[str(champ)] = draft_clash_wins.get(str(champ),0)+1
+    save_data(); ensure_user_structures(champ); user_stats[champ]['wins'] = user_stats[champ].get('wins',0)+1
+    save_data()
+
+# -------------------- Mystery Box --------------------
+def _make_box(set_key='24-25'):
+    base_dir = os.path.dirname(__file__)
+    cand = []
+    for pos in available_positions:
+        path = os.path.join(base_dir, 'players', set_key, f'{pos}.json')
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    arr = json.load(f)
+                    for it in arr: cand.append(it)
+            except:
+                pass
+    if not cand:
+        for uid, team in user_teams.items():
+            for p in team: cand.append(p)
+    _r.shuffle(cand)
+    a = next((c for c in cand if c.get('tier')=='A'), None)
+    box = []
+    if a: box.append(a)
+    bpool = [c for c in cand if c.get('tier') in ('B','C')]
+    for _ in range(2):
+        if bpool: box.append(bpool.pop(0))
+    return box
+
+@bot.command()
+async def mystery(ctx, action: str = None):
+    ch = ctx.channel.id
+    if action is None:
+        await ctx.send("Usage: !mystery start|bid|open|status")
+        return
+    action = action.lower()
+    if action == 'start':
+        box = _make_box('24-25')
+        if not box: await ctx.send("No box could be created."); return
+        bid = str(uuid.uuid4())[:8]
+        mystery_boxes.setdefault(ch, {})[bid] = {'id':bid,'contents':box,'host':str(ctx.author.id),'bids':{},'active':True}
+        save_data(); await ctx.send(f"🎁 Mystery Box `{bid}` created! Bid with `!mystery bid {bid} 10m`"); return
+    if action == 'status':
+        boxes = mystery_boxes.get(ch, {})
+        if not boxes: await ctx.send("No boxes."); return
+        desc = '\\n'.join([f\"{b['id']} - Host:<@{b['host']}> - {'Active' if b['active'] else 'Closed'}\" for b in boxes.values()])
+        await ctx.send(f\"Active boxes:\\n{desc}\"); return
+    if action == 'bid':
+        parts = ctx.message.content.strip().split(); 
+        if len(parts) < 4: await ctx.send('Usage: !mystery bid <box_id> <amount>'); return
+        _,_,box_id,amount = parts[:4]
+        boxes = mystery_boxes.get(ch,{}) ; box = boxes.get(box_id)
+        if not box or not box.get('active'): await ctx.send('No such active box'); return
+        s = amount.lower().replace(',','').strip(); mul=1
+        if s.endswith('m'): mul=1_000_000; s=s[:-1]
+        if s.endswith('k'): mul=1_000; s=s[:-1]
+        try: amt = int(float(s)*mul)
+        except: await ctx.send('Invalid amount'); return
+        uid = str(ctx.author.id); ensure_user_structures(uid)
+        if user_budgets[uid] < amt: await ctx.send(\"You don't have enough budget\"); return
+        box['bids'][uid] = amt; save_data(); await ctx.send(f\"{ctx.author.mention} bid {format_currency(amt)} on {box_id}\"); return
+    if action == 'open':
+        parts = ctx.message.content.strip().split()
+        if len(parts) < 3: await ctx.send('Usage: !mystery open <box_id>'); return
+        bid = parts[2]; boxes = mystery_boxes.get(ch,{}); box = boxes.get(bid)
+        if not box: await ctx.send('No such box'); return
+        if str(ctx.author.id) != box['host'] and ctx.author.id != PRIVILEGED_USER_ID: await ctx.send('Only host or privileged user can open'); return
+        if not box.get('bids'): box['active'] = False; save_data(); await ctx.send('No bids; box unsold'); return
+        winner = max(box['bids'].items(), key=lambda x: x[1])[0]; price = box['bids'][winner]
+        ensure_user_structures(winner)
+        if user_budgets[winner] < price: await ctx.send('Winner cannot pay; box void'); box['active']=False; save_data(); return
+        user_budgets[winner] -= price
+        for p in box['contents']:
+            entry = {'name': p.get('name','Unknown'), 'position': p.get('position','unknown'), 'league': p.get('league','Unknown'), 'price':0, 'set':'Mystery Box', 'tier': p.get('tier','C')}
+            user_teams.setdefault(winner, []).append(entry)
+        box['active'] = False; save_data(); await ctx.send(f\"🎉 Box {bid} won by <@{winner}> for {format_currency(price)}\") ; return
+    await ctx.send('Unknown mystery action')
+
+# ----------------------------------------------------------------------------------------
+# End of added gamemode code
+
+
+
+# -------------------- Added Leaderboards for Draft Clash and Mystery Box --------------------
+@bot.command()
+async def draftclashleaderboard(ctx):
+    if not draft_clash_wins:
+        await ctx.send("No Draft Clash wins recorded yet.")
+        return
+    items = sorted(draft_clash_wins.items(), key=lambda x: x[1], reverse=True)[:10]
+    desc = "\n".join([f"<@{uid}> — {wins} wins" for uid, wins in items])
+    embed = discord.Embed(title="⚡ Draft Clash Leaderboard", description=desc, color=discord.Color.blue())
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def mysteryleaderboard(ctx):
+    if not mystery_wins:
+        await ctx.send("No Mystery Box wins recorded yet.")
+        return
+    items = sorted(mystery_wins.items(), key=lambda x: x[1], reverse=True)[:10]
+    desc = "\n".join([f"<@{uid}> — {wins} boxes" for uid, wins in items])
+    embed = discord.Embed(title="🎁 Mystery Box Leaderboard", description=desc, color=discord.Color.green())
+    await ctx.send(embed=embed)
