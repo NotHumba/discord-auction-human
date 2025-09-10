@@ -8,6 +8,10 @@ import os
 import asyncio
 import uuid
 import time
+from keep_alive import keep_alive
+
+# Create alias for random module
+_r = random
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -125,6 +129,15 @@ user_stats = {
 }  # new: tracks wins/losses/draws/money_spent/most_expensive/trades_made
 tournaments = {}  # new: running tournaments (kept in-memory + saved)
 pending_trades = {}  # new: trade proposals {trade_id: {...}}
+
+# Additional game mode state variables
+koth_state = {}  # King of the Hill state
+draft_clash_sessions = {}  # Draft clash sessions
+mystery_boxes = {}  # Mystery box system
+
+# KoTH file paths
+KOTH_AUCTION_FILE = "data/koth_auction.json"
+KOTH_DRAFT_FILE = "data/koth_draft.json"
 
 STARTING_BUDGET = 1000000000
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -2413,7 +2426,14 @@ async def draftclash(ctx, action: str = None):
         session['state'] = 'drafting'
         session['round'] = 1
         session['picks'] = {uid: [] for uid in session['players']}
-        session['available_pool'] = _build_pool(session['set_key'], size=60)
+        # Build pool from available players
+        pool = []
+        for pos in available_positions:
+            tiered_players = load_players_by_position(pos, session['set_key'])
+            for tier in ['A', 'B', 'C']:
+                pool.extend(tiered_players[tier])
+        random.shuffle(pool)
+        session['available_pool'] = pool[:60]
         await _draft_offer(ctx, session)
         save_data()
         return
@@ -2615,7 +2635,7 @@ async def _draft_run_knockout(ctx, session):
         }
         active_lineups[uid] = 'draft'
     bracket = players[:]
-    _r.shuffle(bracket)
+    random.shuffle(bracket)
     round_no = 1
     while len(bracket) > 1:
         nxt = []
@@ -2829,9 +2849,6 @@ async def koth_add(ctx, *members: discord.Member):
 
 
 # -------------------- KoTH System (Merged) --------------------
-import uuid, random, os, json, time
-KOTH_AUCTION_FILE = "data/koth_auction.json"
-KOTH_DRAFT_FILE = "data/koth_draft.json"
 
 def _load_json(path):
     try:
@@ -2855,12 +2872,12 @@ koth_draft = _load_json(KOTH_DRAFT_FILE)
 
 @bot.command()
 async def koth(ctx, action: str = None, mode: str = None):
-    \"\"\"Manage KoTH sessions.
+    """Manage KoTH sessions.
     Usage:
       !koth start auction
       !koth start draftclash
       !koth add <session_id?> @user1 @user2
-    \"\"\"
+    """
     chan = str(ctx.channel.id)
     if action == "start":
         if mode == "auction":
@@ -2947,10 +2964,9 @@ async def koth(ctx, action: str = None, mode: str = None):
         await ctx.send(f"Added to KoTH: {', '.join(added)}")
         return
     else:
-        await ctx.send(\"Use `!koth start` or `!koth add`.\")
+        await ctx.send("Use `!koth start` or `!koth add`.")
         return
 
-@bot.command()
 @bot.command()
 async def challenge(ctx, opponent: discord.Member = None):
     """Challenge someone in the active KoTH session. Use: !challenge @user"""
