@@ -2795,9 +2795,6 @@ async def end(ctx, gamemode: str = None):
 
 # Start the bot
 if __name__ == "__main__":
-    
-# === KOTH SYSTEM INTEGRATION START ===
-import json
 
 KOTH_AUCTION_FILE = "data/koth_auction.json"
 KOTH_DRAFT_FILE = "data/koth_draft.json"
