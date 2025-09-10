@@ -2793,12 +2793,6 @@ async def end(ctx, gamemode: str = None):
     else:
         await ctx.send("❌ Unknown game mode. Available: koth, draftclash")
 
-# Start the bot
-if __name__ == "__main__":
-
-KOTH_AUCTION_FILE = "data/koth_auction.json"
-KOTH_DRAFT_FILE = "data/koth_draft.json"
-
 def load_koth(file):
     if os.path.exists(file):
         with open(file, "r") as f:
