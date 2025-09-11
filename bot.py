@@ -1843,975 +1843,96 @@ def calculate_team_score_based_on_lineup(user_id, lineup_name=None):
     return max(0, attack_score), max(0, defense_score)
 
 
+
 def simulate_match(team1_id, team2_id, team1, team2):
-    """Simulates a football match between two teams' lineups."""
-    team1_lineup = user_lineups.get(team1_id, {
-        'players': [],
-        'tactic': 'Balanced',
-        'formation': '4-4-2'
-    })
-    team2_lineup = user_lineups.get(team2_id, {
-        'players': [],
-        'tactic': 'Balanced',
-        'formation': '4-4-2'
-    })
-
-    team1_players = team1_lineup['players'] or user_teams.get(
-        team1_id, [])[:MAX_LINEUP_PLAYERS]
-    team2_players = team2_lineup['players'] or user_teams.get(
-        team2_id, [])[:MAX_LINEUP_PLAYERS]
-    team1_tactic = team1_lineup['tactic'] if team1_lineup[
-        'players'] else 'Balanced'
-    team2_tactic = team2_lineup['tactic'] if team2_lineup[
-        'players'] else 'Balanced'
-    team1_formation = team1_lineup['formation'] if team1_lineup[
-        'players'] else '4-4-2'
-    team2_formation = team2_lineup['formation'] if team2_lineup[
-        'players'] else '4-4-2'
-
-    if not team1_players or not team2_players:
-        return None, "One or both teams have no players.", None
-
-    team1_attack, team1_defense = calculate_team_score_based_on_lineup(
-        team1_id)
-    team2_attack, team2_defense = calculate_team_score_based_on_lineup(
-        team2_id)
-
-    team1_attack += random.randint(-15, 15)
-    team1_defense += random.randint(-15, 15)
-    team2_attack += random.randint(-15, 15)
-    team2_defense += random.randint(-15, 15)
-
-    team1_goals = 0
-    team2_goals = 0
-    score_diff = abs((team1_attack - team2_defense) -
-                     (team2_attack - team1_defense))
-
-    if score_diff < 20:
-        team1_goals = random.randint(0, 3)
-        team2_goals = random.randint(max(0, team1_goals - 1), team1_goals + 1)
-    elif score_diff < 50:
-        if team1_attack - team2_defense > team2_attack - team1_defense:
-            team1_goals = random.randint(2, 4)
-            team2_goals = random.randint(0, 2)
-        else:
-            team1_goals = random.randint(0, 2)
-            team2_goals = random.randint(2, 4)
-    else:
-        if team1_attack - team2_defense > team2_attack - team1_defense:
-            team1_goals = random.randint(3, 6)
-            team2_goals = random.randint(0, 2)
-        else:
-            team1_goals = random.randint(0, 2)
-            team2_goals = random.randint(3, 6)
-
-    narrative = []
-    events = random.randint(3, 5)
-    event_types = ['goal', 'save', 'chance', 'tackle', 'assist']
-
-    for _ in range(events):
-        team = random.choice([1, 2])
-        event = random.choice(event_types)
-        players = team1_players if team == 1 else team2_players
-        tactic = team1_tactic if team == 1 else team2_tactic
-        formation = team1_formation if team == 1 else team2_formation
-        team_name_display = team1.display_name if team == 1 else team2.display_name
-        if players:
-            player = random.choice(players)
-            player_name = player['name']
-            pos = player['position'].upper()
-        else:
-            player_name = f"Team {team} player"
-            pos = "Unknown"
-
-        if event == 'goal':
-            if pos in ['ST', 'LW', 'RW', 'CAM']:
-                narrative.append(
-                    f"⚽ {player_name} ({pos}) scores a {random.choice(['stunning', 'clinical', 'brilliant'])} goal for {team_name_display}!"
-                )
-            else:
-                narrative.append(
-                    f"⚽ {player_name} ({pos}) scores a rare goal for {team_name_display}!"
-                )
-        elif event == 'save':
-            if pos == 'GK':
-                narrative.append(
-                    f"🧤 {player_name} ({pos}) makes a fantastic save to deny {team_name_display}'s opponent!"
-                )
-            else:
-                narrative.append(
-                    f"🧤 {team_name_display}'s goalkeeper makes a crucial save!"
-                )
-        elif event == 'chance':
-            if pos in ['ST', 'LW', 'RW', 'CAM']:
-                narrative.append(
-                    f"🎯 {player_name} ({pos}) misses a golden opportunity for {team_name_display}!"
-                )
-            else:
-                narrative.append(
-                    f"🎯 {player_name} ({pos}) creates a chance for {team_name_display}!"
-                )
-        elif event == 'tackle':
-            if pos in ['CB', 'LB', 'RB', 'CM']:
-                narrative.append(
-                    f"💪 {player_name} ({pos}) makes a crunching tackle to stop {team_name_display}'s opponent!"
-                )
-            else:
-                narrative.append(
-                    f"💪 {player_name} ({pos}) makes a key defensive play for {team_name_display}!"
-                )
-        elif event == 'assist':
-            if pos in ['CAM', 'LW', 'RW', 'CM']:
-                narrative.append(
-                    f"🎁 {player_name} ({pos}) delivers a perfect assist for {team_name_display}!"
-                )
-            else:
-                narrative.append(
-                    f"🎁 {player_name} ({pos}) sets up a goal for {team_name_display}!"
-                )
-
-    if team1_tactic == 'Attacking' and team1_goals > team2_goals:
-        narrative.append(
-            f"{team1.display_name}'s attacking style overwhelmed the opposition's defense!"
-        )
-    elif team2_tactic == 'Defensive' and team2_goals <= team1_goals:
-        narrative.append(
-            f"{team2.display_name}'s defensive solidity frustrated their opponents!"
-        )
-    elif team1_formation in ['5-4-1', '5-3-2'] and team1_goals <= team2_goals:
-        narrative.append(
-            f"{team1.display_name}'s defensive {team1_formation} formation held strong!"
-        )
-    elif team2_formation in ['4-3-3', '3-4-3'] and team2_goals > team1_goals:
-        narrative.append(
-            f"{team2.display_name}'s attacking {team2_formation} formation overwhelmed the opposition!"
-        )
-
-    return (team1_goals,
-            team2_goals), "\n".join(narrative), (team1_attack, team1_defense,
-                                                 team2_attack, team2_defense,
-                                                 team1_formation,
-                                                 team2_formation)
-
-
-@bot.command()
-async def battle(ctx, team1: discord.Member, team2: discord.Member):
-    """Simulates a football match between two participants' lineups."""
-    auction_state = active_auctions.get(ctx.channel.id)
-    if not auction_state:
-        await ctx.send(
-            "No auction is currently running in this channel, so battle commands are not available here."
-        )
-        return
-
-    if ctx.author.id != auction_state[
-            'host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send(
-            "Only the auction host can run this command in this auction.")
-        return
-
-    if auction_state['host'] == ctx.author.id:
-        auction_state['last_host_activity'] = time.time()
-
-    team1_id = str(team1.id)
-    team2_id = str(team2.id)
-
-    if team1_id not in user_teams or not user_teams[team1_id]:
-        await ctx.send(f"{team1.display_name} has no players to field a team.")
-        return
-    if team2_id not in user_teams or not user_teams[team2_id]:
-        await ctx.send(f"{team2.display_name} has no players to field a team.")
-        return
-
-    scoreline, narrative, scores = simulate_match(team1_id, team2_id, team1,
-                                                  team2)
-
-    if scoreline is None:
-        await ctx.send(narrative)
-        return
-
-    team1_goals, team2_goals = scoreline
-    team1_attack, team1_defense, team2_attack, team2_defense, team1_formation, team2_formation = scores
-
-    team1_lineup = user_lineups.get(team1_id, {
-        'players': [],
-        'tactic': 'Balanced',
-        'formation': '4-4-2'
-    })
-    team2_lineup = user_lineups.get(team2_id, {
-        'players': [],
-        'tactic': 'Balanced',
-        'formation': '4-4-2'
-    })
-    team1_players = team1_lineup['players'] or user_teams.get(
-        team1_id, [])[:MAX_LINEUP_PLAYERS]
-    team2_players = team2_lineup['players'] or user_teams.get(
-        team2_id, [])[:MAX_LINEUP_PLAYERS]
-    team1_tactic = team1_lineup['tactic'] if team1_lineup[
-        'players'] else 'Balanced'
-    team2_tactic = team2_lineup['tactic'] if team2_lineup[
-        'players'] else 'Balanced'
-    team1_formation = team1_lineup['formation'] if team1_lineup[
-        'players'] else '4-4-2'
-    team2_formation = team2_lineup['formation'] if team2_lineup[
-        'players'] else '4-4-2'
-
-    embed = discord.Embed(title="⚽ Match Result", color=discord.Color.purple())
-    embed.add_field(name="Teams",
-                    value=f"{team1.display_name} vs {team2.display_name}",
-                    inline=False)
-    embed.add_field(name="Scoreline",
-                    value=f"{team1_goals} - {team2_goals}",
-                    inline=False)
-    embed.add_field(
-        name="Team Strengths",
-        value=
-        f"{team1.display_name}: Attack {team1_attack}, Defense {team1_defense}\n"
-        f"{team2.display_name}: Attack {team2_attack}, Defense {team2_defense}",
-        inline=False)
-    embed.add_field(
-        name="Tactics and Formations",
-        value=f"{team1.display_name}: {team1_tactic}, {team1_formation}\n"
-        f"{team2.display_name}: {team2_tactic}, {team2_formation}",
-        inline=False)
-    embed.add_field(name="Match Summary", value=narrative, inline=False)
-
-    team1_lineup_str = "\n".join(
-        [f"{p['name']} ({p['position'].upper()})"
-         for p in team1_players]) or "No lineup set"
-    team2_lineup_str = "\n".join(
-        [f"{p['name']} ({p['position'].upper()})"
-         for p in team2_players]) or "No lineup set"
-    embed.add_field(name=f"{team1.display_name}'s Lineup",
-                    value=team1_lineup_str,
-                    inline=True)
-    embed.add_field(name=f"{team2.display_name}'s Lineup",
-                    value=team2_lineup_str,
-                    inline=True)
-
-    if team1_goals > team2_goals:
-        embed.add_field(name="Winner",
-                        value=f"{team1.display_name} 🏆",
-                        inline=False)
-    elif team2_goals > team1_goals:
-        embed.add_field(name="Winner",
-                        value=f"{team2.display_name} 🏆",
-                        inline=False)
-    else:
-        embed.add_field(name="Result", value="Draw 🤝", inline=False)
-
-    embed.set_footer(
-        text="Use !battle @user1 @user2 to simulate another match!")
-    await ctx.send(embed=embed)
-
-
-@bot.command()
-async def rankteams(ctx):
-    """Ranks all participant teams based on their lineup composition."""
-    if not user_teams:
-        await ctx.send("No teams have been formed yet to rank.")
-        return
-
-    if ctx.channel.id in active_auctions and active_auctions[
-            ctx.channel.id]['host'] == ctx.author.id:
-        active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
-
-    team_scores = []
-    for user_id, team_players in user_teams.items():
-        if team_players:
-            attack_score, defense_score = calculate_team_score_based_on_lineup(
-                user_id)
-            total_score = attack_score + defense_score
-            try:
-                user = await bot.fetch_user(int(user_id))
-                team_scores.append((user.display_name, total_score, user_id,
-                                    len(team_players)))
-            except discord.NotFound:
-                team_scores.append(
-                    (f"Unknown User ({user_id})", total_score, user_id,
-                     len(team_players)))
-            except Exception as e:
-                print(f"Error fetching user {user_id}: {e}")
-                team_scores.append(
-                    (f"Error User ({user_id})", total_score, user_id,
-                     len(team_players)))
-
-    if not team_scores:
-        await ctx.send("No players have been bought by any participant yet.")
-        return
-
-    team_scores.sort(key=lambda x: x[1], reverse=True)
-
-    embed = discord.Embed(title="🏆 Team Rankings (Based on Lineup)",
-                          color=discord.Color.gold())
-    description_list = []
-
-    for i, (name, score, user_id,
-            num_players_in_team) in enumerate(team_scores):
-        lineup_data = user_lineups.get(user_id, {
-            'players': [],
-            'tactic': 'Balanced',
-            'formation': '4-4-2'
-        })
-        players_in_lineup = lineup_data['players'] if lineup_data[
-            'players'] else user_teams.get(user_id, [])[:MAX_LINEUP_PLAYERS]
-
-        positions_covered = set(p['position'].lower()
-                                for p in players_in_lineup)
-
-        set_distribution = {}
-        tier_distribution = {'A': 0, 'B': 0, 'C': 0}
-        for p in players_in_lineup:
-            player_set_name = p.get('set', 'Unknown Set')
-            display_set_name = available_sets.get(player_set_name,
-                                                  player_set_name)
-            set_distribution[display_set_name] = set_distribution.get(
-                display_set_name, 0) + 1
-            tier = p.get('tier', 'C')
-            tier_distribution[tier] += 1
-
-        set_info_parts = [
-            f"{count} {key}" for key, count in set_distribution.items()
-        ]
-        set_summary = f"Sets: {', '.join(set_info_parts)}" if set_info_parts else "No Sets"
-        tier_summary = f"Tiers: A: {tier_distribution['A']}, B: {tier_distribution['B']}, C: {tier_distribution['C']}"
-        tactic = lineup_data['tactic'] if lineup_data['players'] else 'Balanced'
-        formation = lineup_data['formation'] if lineup_data[
-            'players'] else '4-4-2'
-
-        description_list.append(
-            f"**{i+1}.** <@{user_id}> ({name}): **{score} Team Score** ({len(players_in_lineup)} players in lineup)\n"
-            f"  Positions: {', '.join(p.upper() for p in positions_covered) if positions_covered else 'None'}\n"
-            f"  Tactic: {tactic}, Formation: {formation}\n"
-            f"  {set_summary}\n"
-            f"  {tier_summary}\n")
-
-    embed.description = "\n".join(description_list)
-    embed.set_footer(
-        text="Higher Team Score indicates a more complete and cohesive lineup."
-    )
-    await ctx.send(embed=embed)
-
-
-@bot.command()
-async def endauction(ctx):
-    """Ends the current auction in this channel and resets its data and participant data (host or privileged user only)."""
-    auction_state = active_auctions.get(ctx.channel.id)
-    if not auction_state:
-        await ctx.send("No auction is currently running in this channel.")
-        return
-
-    if ctx.author.id != auction_state[
-            'host'] and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send(
-            "Only the auction host or the privileged user can end this auction."
-        )
-        return
-
-    if auction_state['timeout_task']:
-        auction_state['timeout_task'].cancel()
-
-    participants = auction_state['participants'].copy()
-    for user_id in participants:
-        user_budgets[user_id] = STARTING_BUDGET
-        user_teams[user_id] = []
-        user_lineups[user_id] = {
-            'main': {
-                'players': [],
-                'tactic': 'Balanced',
-                'formation': '4-4-2'
-            }
-        }
-        active_lineups[user_id] = 'main'
-
-    del active_auctions[ctx.channel.id]
-
-    if not save_data():
-        await ctx.send(
-            "⚠️ Error saving data. Auction ended, but data may not persist.")
-        return
-
-    await ctx.send(
-        "🔚 Auction in this channel has been ended. Participant budgets, teams, and lineups have been reset."
-    )
-
-@bot.command()
-async def footy(ctx, category: str = None):
-    """Shows categorized help for the bot."""
-    embed = discord.Embed(title="📘 Football Auction Bot Commands",
-                          color=discord.Color.blue())
-
-    if category is None:
-        embed.description = (
-            "Use `!footy <category>` to view commands in that category.\n\n"
-            "Available categories:\n"
-            "⚽ auction, 👥 team, 🎮 gamemodes, 📊 leaderboards")
-    elif category.lower() == "auction":
-        embed.add_field(
-            name="Auction Commands",
-            value="\n".join([
-                "`!startauction @users...` – Start a new auction",
-                "`!sets` – Show all available sets",
-                "`!participants` – List participants",
-                "`!bid [amount]` – Place a bid",
-                "`!sold / !unsold` – Resolve auction",
-                "`!status` – Current auction status",
-                "`!endauction` – End current auction"
-        ]),
-        inline=False)
-    elif category.lower() == "team":
-        embed.add_field(name="Team Commands",
-                        value="\n".join([
-                            "`!myplayers` – View your bought players",
-                            "`!budget` – Show your budget",
-                            "`!setlineup [name]` – Setup/edit a lineup",
-                            "`!lineups` – View all your lineups",
-                            "`!switchlineup <name>` – Switch active lineup",
-                            "`!deletelineup <name>` – Delete a lineup",
-                            "`!viewlineup` – View your active lineup",
-                            "`!battle @user1 @user2` – Simulate a match"
-                        ]),
-                        inline=False)
-    elif category.lower() == "gamemodes":
-        embed.add_field(
-            name="Gamemodes",
-            value="\n".join([
-                "`!koth start` – Start King of the Hill (max 6 players)",
-                "`!draftclash start` – Start Draft Clash (max 8 players)",
-                "`!draftclash koth` – Enter KoTH with drafted team",
-                "`!challenge @user` – Challenge for the throne",
-                "`!end <gamemode>` – End active game sessions"
-            ]),
-            inline=False)
-    elif category.lower() == "leaderboards":
-        embed.add_field(
-            name="Leaderboards",
-            value="\n".join([
-                "`!leaderboard auction` – Auction stats",
-                "`!leaderboard gamemodes` – KoTH & Draft Clash stats",
-                "`!draftclashleaderboard` – Draft Clash wins"
-            ]),
-            inline=False)
-    else:
-        embed.description = "❌ Unknown category. Try: auction, team, gamemodes, leaderboards."
-
-    await ctx.send(embed=embed)
-
-
-import os
-from keep_alive import keep_alive
-
-keep_alive()
-
-import random
-
-
-@bot.command()
-async def market(ctx):
-    """Show free agent players available to bid on."""
-    free_agents = ["Player A", "Player B", "Player C", "Player D", "Player E"]
-    embed = discord.Embed(title="🛒 Free Agent Market",
-                          color=discord.Color.gold())
-    for p in free_agents:
-        form = player_form.get(p, 5)
-        embed.add_field(
-            name=p,
-            value=f"Form: {form}/10 | Starting bid: {random.randint(5, 50)}M",
-            inline=False)
-    await ctx.send(embed=embed)
-
-
-@bot.command()
-async def events(ctx):
-    """Trigger or show random events."""
-    events_list = [
-        "🚑 Injury – One of your players is out for 2 matches!",
-        "⚡ Form Boost – Random player gains +2 form for 3 matches!",
-        "🔄 Transfer Rumor – Random player may be swapped with the market!",
-    ]
-    event = random.choice(events_list)
-    await ctx.send(f"🎲 Random Event: {event}")
-
-
-@bot.group(invoke_without_command=True)
-async def draft(ctx):
-    """Draft mode base command."""
-    await ctx.send(
-        "📋 Use `!draft start` to begin the draft or `!draft pick <player>` to pick a player."
-    )
-
-
-@draft.command()
-async def start(ctx):
-    await ctx.send("📋 Draft mode started! Turn order will be assigned.")
-
-
-@draft.command()
-async def pick(ctx, *, player_name):
-    await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
-
-
-# -------------------- Added Gamemodes: KoTH, Draft Clash, Mystery Box --------------------
-# Note: Integrates with user_teams, user_budgets, user_lineups, user_stats, save_data(), load_data(), ensure_user_structures(), simulate_match().
-
-koth_state = {
-    'current_king_id': None,
-    'king_streak': 0,
-    'longest_reigns': {},
-    'history': []
-}
-
-draft_clash_sessions = {}
-draft_clash_wins = {}
-
-
-# -------------------- KoTH --------------------
-@bot.command()
-async def draftclash(ctx, action: str = None):
-    ch = ctx.channel.id
-    if action is None:
-        await ctx.send("Usage: !draftclash start|join|begin|status|pick <1-3>|koth")
-        return
-    action = action.lower()
-    if action == 'start':
-        if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
-                'state') in ('lobby', 'drafting'):
-            await ctx.send("A draft is already in this channel.")
-            return
-        draft_clash_sessions[ch] = {
-            'host': str(ctx.author.id),
-            'players': [str(ctx.author.id)],
-            'state': 'lobby',
-            'round': 0,
-            'picks': {},
-            'available_pool': [],
-            'set_key': None,
-            'max_players': 4
-        }
-        save_data()
-        await ctx.send(
-            f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start."
-        )
-        return
-    session = draft_clash_sessions.get(ch)
-    if not session:
-        await ctx.send("No active draft lobby. Start with `!draftclash start`."
-                       )
-        return
-    if action == 'join':
-        if session['state'] != 'lobby':
-            await ctx.send("Draft already in progress.")
-            return
-        if len(session['players']) >= session['max_players']:
-            await ctx.send("Lobby full.")
-            return
-        if str(ctx.author.id) in session['players']:
-            await ctx.send("You already joined.")
-            return
-        session['players'].append(str(ctx.author.id))
-        save_data()
-        await ctx.send(
-            f"{ctx.author.mention} joined the draft ({len(session['players'])}/{session['max_players']})."
-        )
-        return
-    if action == 'begin':
-        if str(ctx.author.id) != session['host']:
-            await ctx.send("Only host can begin.")
-            return
-        # optional set key
-        parts = ctx.message.content.strip().split()
-        set_key = None
-        if len(parts) > 2: set_key = parts[2].strip().lower()
-        session['set_key'] = set_key or '24-25'
-        session['state'] = 'drafting'
-        session['round'] = 1
-        session['picks'] = {uid: [] for uid in session['players']}
-        # Build pool from available players
-        pool = []
-        for pos in available_positions:
-            tiered_players = load_players_by_position(pos, session['set_key'])
-            for tier in ['A', 'B', 'C']:
-                pool.extend(tiered_players[tier])
-        random.shuffle(pool)
-        session['available_pool'] = pool[:60]
-        await _draft_offer(ctx, session)
-        save_data()
-        return
-    if action == 'status':
-        await ctx.send(
-            f"Draft status: {session['state']}, players: {', '.join(session['players'])}, round: {session['round']}"
-        )
-        return
-    if action == 'pick':
-        parts = ctx.message.content.strip().split()
-        if len(parts) < 3:
-            await ctx.send("Use `!draftclash pick <1|2|3>`")
-            return
+    """Simulate a match and produce commentary.
+    Returns: ( (goals1, goals2), narrative_string, events_dict )
+    """
+    try:
+        # compute attack/defense using existing helper
+        attack1, defense1 = calculate_team_score_based_on_lineup(team1_id)
+        attack2, defense2 = calculate_team_score_based_on_lineup(team2_id)
+    except Exception:
+        # fallback to simple values
+        attack1 = random.randint(50, 120)
+        defense1 = random.randint(50, 120)
+        attack2 = random.randint(50, 120)
+        defense2 = random.randint(50, 120)
+
+    # determine goals by comparing attacks vs defenses, with randomness
+    diff1 = max(0, attack1 - defense2)
+    diff2 = max(0, attack2 - defense1)
+
+    # base goal expectation scaled down
+    g1 = int(round(diff1 / 60.0)) + random.randint(0,2)
+    g2 = int(round(diff2 / 60.0)) + random.randint(0,2)
+
+    # adjust slightly for randomness
+    if random.random() < 0.12:
+        g1 += 1
+    if random.random() < 0.12:
+        g2 += 1
+
+    # clamp
+    g1 = max(0, min(6, g1))
+    g2 = max(0, min(6, g2))
+
+    # create commentary events
+    commentary = []
+    commentary.append("⚽ Kick-off!")
+
+    total_goals = g1 + g2
+    # number of other events
+    other_events = max(3, 6 - total_goals + random.randint(0,3))
+    num_events = total_goals + other_events
+
+    minutes = sorted(random.sample(range(1, 90), min(15, max(5, num_events))))
+    goal_minutes = []
+    # assign goal minutes for team1 and team2
+    goal_minutes_team1 = sorted(random.sample(minutes, g1)) if g1>0 else []
+    remaining_minutes = [m for m in minutes if m not in goal_minutes_team1]
+    goal_minutes_team2 = sorted(random.sample(remaining_minutes, g2)) if g2>0 else []
+
+    # helper to pick random player name from lineup
+    def pick_name(team_id):
         try:
-            idx = int(parts[2])
-            assert idx in (1, 2, 3)
-        except:
-            await ctx.send("Choice must be 1,2 or 3")
-            return
-        await _draft_pick(ctx, session, idx - 1)
-        save_data()
-        return
-    if action == 'koth':
-        # Check if user participated in a completed draft and has a lineup
-        user_id = str(ctx.author.id)
-        if user_id not in user_lineups or not user_lineups[user_id]:
-            await ctx.send("❌ You don't have any lineups yet. Complete a draft first!")
-            return
-        
-        active_lineup_name = active_lineups.get(user_id, 'main')
-        if active_lineup_name not in user_lineups[user_id] or not user_lineups[user_id][active_lineup_name].get('players'):
-            await ctx.send("❌ You don't have a draft lineup yet. Complete a draft first!")
-            return
-            
-        # Check if user was in this channel's draft session
-        if session and user_id not in session.get('players', []):
-            await ctx.send("❌ You didn't participate in this channel's draft session.")
-            return
-            
-        # If no current king, user becomes king
-        if koth_state['current_king_id'] is None:
-            koth_state['current_king_id'] = user_id
-            koth_state['king_streak'] = 0
-            save_data()
-            await ctx.send(f"👑 {ctx.author.mention} claims the throne as the new King of the Hill with their drafted lineup!")
-            return
-            
-        # Challenge the current king
-        current_king = koth_state['current_king_id']
-        if current_king == user_id:
-            await ctx.send("👑 You're already the King! Defend your throne against challengers.")
-            return
-            
-        # Simulate battle between challenger and king
-        try:
-            king_user = await bot.fetch_user(int(current_king))
-            challenger_user = ctx.author
-            
-            class MockUser:
-                def __init__(self, display_name):
-                    self.display_name = display_name
-            
-            king_mock = MockUser(king_user.display_name)
-            challenger_mock = MockUser(challenger_user.display_name)
-            
-            result = simulate_match(current_king, user_id, king_mock, challenger_mock)
-            
-            if isinstance(result, tuple):
-                scoreline, narrative, scores = result
-                king_score, challenger_score = scoreline
-                
-                embed = discord.Embed(title="🏆 King of the Hill Battle", 
-                                     description=narrative, 
-                                     color=discord.Color.gold())
-                embed.add_field(name=f"👑 {king_user.display_name} (King)", 
-                               value=f"Score: {king_score}", inline=True)
-                embed.add_field(name=f"⚔️ {challenger_user.display_name} (Challenger)", 
-                               value=f"Score: {challenger_score}", inline=True)
-                
-                if challenger_score > king_score:
-                    # Challenger wins, becomes new king
-                    old_streak = koth_state['king_streak']
-                    koth_state['longest_reigns'][current_king] = max(
-                        koth_state['longest_reigns'].get(current_king, 0), old_streak)
-                    
-                    koth_state['current_king_id'] = user_id
-                    koth_state['king_streak'] = 0
-                    koth_state['history'].append({
-                        'old_king': current_king,
-                        'new_king': user_id,
-                        'streak_ended': old_streak
-                    })
-                    
-                    embed.add_field(name="🏆 Result", 
-                                   value=f"{challenger_user.mention} defeats the king and claims the throne!", 
-                                   inline=False)
-                    
-                    # Update user stats
-                    ensure_user_structures(user_id)
-                    ensure_user_structures(current_king)
-                    user_stats[user_id]['wins'] = user_stats[user_id].get('wins', 0) + 1
-                    user_stats[current_king]['losses'] = user_stats[current_king].get('losses', 0) + 1
-                    
-                else:
-                    # King defends successfully
-                    koth_state['king_streak'] += 1
-                    embed.add_field(name="🛡️ Result", 
-                                   value=f"{king_user.display_name} successfully defends the throne! Streak: {koth_state['king_streak']}", 
-                                   inline=False)
-                    
-                    # Update user stats
-                    ensure_user_structures(user_id)
-                    ensure_user_structures(current_king)
-                    user_stats[current_king]['wins'] = user_stats[current_king].get('wins', 0) + 1
-                    user_stats[user_id]['losses'] = user_stats[user_id].get('losses', 0) + 1
-                
-                save_data()
-                await ctx.send(embed=embed)
-                
+            lineup = user_lineups.get(team_id, {}).get(active_lineups.get(team_id,'main'), {})
+            players = lineup.get('players') or user_teams.get(team_id, [])
+            if players:
+                p = random.choice(players)
+                return p.get('name', 'Player')
+        except Exception:
+            pass
+        return "Player"
+
+    for minute in minutes:
+        if minute in goal_minutes_team1:
+            scorer = pick_name(team1_id)
+            commentary.append(f"🔥 {minute}’ — GOAL! {scorer} finishes coolly for {team1.display_name}. ({g1}-{g2})")
+        elif minute in goal_minutes_team2:
+            scorer = pick_name(team2_id)
+            commentary.append(f"🔥 {minute}’ — GOAL! {scorer} nets one for {team2.display_name}. ({g1}-{g2})")
+        else:
+            ev = random.choice(["shot", "save", "miss", "foul", "counter", "chance"])
+            if ev == "shot":
+                commentary.append(f"⚡ {minute}’ — A thunderous shot from distance that tests the keeper.")
+            elif ev == "save":
+                commentary.append(f"🧤 {minute}’ — Brilliant save from the keeper to keep the scoreline level.")
+            elif ev == "miss":
+                commentary.append(f"❌ {minute}’ — Close! The chance drifts wide.")
+            elif ev == "foul":
+                commentary.append(f"🟨 {minute}’ — A cynical challenge; the referee reaches for a card.")
+            elif ev == "counter":
+                commentary.append(f"⚡ {minute}’ — Rapid counter-attack — almost a goal!")
             else:
-                await ctx.send("❌ Error simulating the battle. Please try again.")
-                
-        except Exception as e:
-            await ctx.send(f"❌ Error during KoTH battle: {str(e)}")
-        
-        return
-    await ctx.send("Unknown action for draftclash.")
+                commentary.append(f"🔁 {minute}’ — A tense moment in midfield.")
 
+    commentary.append(f"🏁 Full time: {team1.display_name} {g1}–{g2} {team2.display_name}")
 
-async def _draft_offer(ctx, session):
-    players = session['players']
-    round_no = session['round']
-    order = players if round_no % 2 == 1 else list(reversed(players))
-    for uid in order:
-        if len(session['picks'].get(uid, [])) < round_no:
-            pool = session['available_pool']
-            choices = []
-            for _ in range(3):
-                if not pool: break
-                choices.append(pool.pop(0))
-            if not choices:
-                session['state'] = 'completed'
-                await ctx.send("Pool exhausted; draft ended.")
-                return
-            session.setdefault('current_offer', {})[uid] = choices
-            embed = discord.Embed(
-                title=f"Draft Round {round_no} — Pick for <@{uid}>",
-                color=discord.Color.blue())
-            for i, p in enumerate(choices, start=1):
-                embed.add_field(
-                    name=f"{i}. {p.get('name','Unknown')}",
-                    value=
-                    f"{p.get('position','?').upper()} - {p.get('league','?')}",
-                    inline=False)
-            embed.set_footer(text="Type `!draftclash pick <1|2|3>`")
-            await ctx.send(embed=embed)
-            return
-    session['round'] += 1
-    if session['round'] > 11:
-        session['state'] = 'completed'
-        await ctx.send("Draft complete! Running knockout...")
-        await _draft_run_knockout(ctx, session)
-        return
-    await _draft_offer(ctx, session)
+    narrative = "\n".join(commentary)
+    events = {"goals": {"team1": g1, "team2": g2}, "commentary": commentary}
 
-
-async def _draft_pick(ctx, session, idx):
-    uid = str(ctx.author.id)
-    if 'current_offer' not in session or uid not in session['current_offer']:
-        await ctx.send("No offer.")
-        return
-    choices = session['current_offer'].pop(uid)
-    if idx < 0 or idx >= len(choices):
-        await ctx.send("Invalid index")
-        return
-    picked = choices[idx]
-    session['picks'].setdefault(uid, []).append(picked)
-    await ctx.send(
-        f"{ctx.author.mention} picked **{picked.get('name','Unknown')}** for round {session['round']}"
-    )
-    await _draft_offer(ctx, session)
-
-
-async def _draft_run_knockout(ctx, session):
-    players = session['players'][:]
-    for uid in players:
-        picks = session['picks'].get(uid, [])
-        lineup = picks[:11]
-        if len(lineup) < 11:
-            extra = user_teams.get(uid, [])[:11 - len(lineup)]
-            lineup.extend(extra)
-        if uid not in user_lineups:
-            user_lineups[uid] = {}
-            active_lineups[uid] = 'draft'
-        user_lineups[uid]['draft'] = {
-            'players': lineup,
-            'tactic': 'Balanced',
-            'formation': '4-4-2'
-        }
-        active_lineups[uid] = 'draft'
-    bracket = players[:]
-    random.shuffle(bracket)
-    round_no = 1
-    while len(bracket) > 1:
-        nxt = []
-        for i in range(0, len(bracket), 2):
-            if i + 1 >= len(bracket):
-                nxt.append(bracket[i])
-                continue
-            a = bracket[i]
-            b = bracket[i + 1]
-
-            class L:
-                pass
-
-            ma = L()
-            ma.display_name = (await bot.fetch_user(int(a))).name
-            mb = L()
-            mb.display_name = (await bot.fetch_user(int(b))).name
-            res = simulate_match(a, b, ma, mb)
-            if isinstance(res, tuple):
-                scoreline, narrative, scores = res
-                if scoreline[0] >= scoreline[1]: winner = a
-                else: winner = b
-            else:
-                winner = a
-            nxt.append(winner)
-            await ctx.send(
-                f"Round {round_no}: <@{a}> vs <@{b}> — Winner: <@{winner}>")
-        bracket = nxt
-        round_no += 1
-    champ = bracket[0] if bracket else None
-    if champ: 
-        await ctx.send(f"🏁 Draft Clash Champion: <@{champ}>")
-        # Announce KoTH integration
-        await ctx.send("🎯 **Draft lineups are now ready for King of the Hill!** All participants can use `!draftclash koth` to enter KoTH battles with their drafted teams.")
-    draft_clash_wins[str(champ)] = draft_clash_wins.get(str(champ), 0) + 1
-    save_data()
-    ensure_user_structures(champ)
-    user_stats[champ]['wins'] = user_stats[champ].get('wins', 0) + 1
-    save_data()
-
-
-# ----------------------------------------------------------------------------------------
-# End of added gamemode code
-
-
-# -------------------- Added Leaderboards for Draft Clash --------------------
-@bot.command()
-async def draftclashleaderboard(ctx):
-    if not draft_clash_wins:
-        await ctx.send("No Draft Clash wins recorded yet.")
-        return
-    items = sorted(draft_clash_wins.items(), key=lambda x: x[1],
-                   reverse=True)[:10]
-    desc = "\n".join([f"<@{uid}> — {wins} wins" for uid, wins in items])
-    embed = discord.Embed(title="⚡ Draft Clash Leaderboard",
-                          description=desc,
-                          color=discord.Color.blue())
-    await ctx.send(embed=embed)
-
-
-
-
-@bot.command()
-async def lineups(ctx):
-    """Show all your saved lineups."""
-    user_id = str(ctx.author.id)
-    if user_id not in user_lineups or not user_lineups[user_id]:
-        await ctx.send("❌ You don't have any lineups yet. Use `!setlineup` to create one!")
-        return
-    
-    active_name = active_lineups.get(user_id, 'main')
-    embed = discord.Embed(title="🎯 Your Lineups", color=discord.Color.blue())
-    
-    for lineup_name, lineup_data in user_lineups[user_id].items():
-        player_count = len(lineup_data.get('players', []))
-        formation = lineup_data.get('formation', '4-4-2')
-        tactic = lineup_data.get('tactic', 'Balanced')
-        
-        status = "🟢 ACTIVE" if lineup_name == active_name else "⚪"
-        value = f"{status}\n{player_count}/11 players\n{formation} ({tactic})"
-        
-        embed.add_field(name=f"📋 {lineup_name.title()}", value=value, inline=True)
-    
-    embed.set_footer(text="Use !switchlineup <name> to change active lineup | !setlineup <name> to create/edit")
-    await ctx.send(embed=embed)
-
-@bot.command()
-async def switchlineup(ctx, lineup_name: str = None):
-    """Switch to a different lineup for battles."""
-    if lineup_name is None:
-        await ctx.send("❌ Please specify a lineup name: `!switchlineup <name>`")
-        return
-    
-    user_id = str(ctx.author.id)
-    lineup_name = lineup_name.lower()
-    
-    if user_id not in user_lineups or lineup_name not in user_lineups[user_id]:
-        await ctx.send(f"❌ Lineup '{lineup_name}' doesn't exist. Use `!lineups` to see available lineups.")
-        return
-    
-    active_lineups[user_id] = lineup_name
-    save_data()
-    
-    lineup_data = user_lineups[user_id][lineup_name]
-    player_count = len(lineup_data.get('players', []))
-    formation = lineup_data.get('formation', '4-4-2')
-    tactic = lineup_data.get('tactic', 'Balanced')
-    
-    await ctx.send(f"✅ Switched to lineup: **{lineup_name.title()}**\n"
-                  f"📋 {player_count}/11 players | {formation} ({tactic})")
-
-@bot.command()
-async def deletelineup(ctx, lineup_name: str = None):
-    """Delete a saved lineup."""
-    if lineup_name is None:
-        await ctx.send("❌ Please specify a lineup name: `!deletelineup <name>`")
-        return
-    
-    user_id = str(ctx.author.id)
-    lineup_name = lineup_name.lower()
-    
-    if lineup_name == 'main':
-        await ctx.send("❌ Cannot delete the main lineup!")
-        return
-    
-    if user_id not in user_lineups or lineup_name not in user_lineups[user_id]:
-        await ctx.send(f"❌ Lineup '{lineup_name}' doesn't exist.")
-        return
-    
-    del user_lineups[user_id][lineup_name]
-    
-    # If this was the active lineup, switch to main
-    if active_lineups.get(user_id) == lineup_name:
-        active_lineups[user_id] = 'main'
-    
-    save_data()
-    await ctx.send(f"🗑️ Deleted lineup: **{lineup_name.title()}**")
-
-@bot.command()
-async def end(ctx, gamemode: str = None):
-    """End a specific game mode: koth or draftclash."""
-    if gamemode is None:
-        await ctx.send("Usage: `!end <gamemode>` where gamemode is: koth or draftclash")
-        return
-    
-    gamemode = gamemode.lower()
-    ch = ctx.channel.id
-    
-    if gamemode == "koth":
-        if koth_state['current_king_id'] is None:
-            await ctx.send("No active King of the Hill session.")
-            return
-        
-        # Reset KoTH state
-        koth_state['current_king_id'] = None
-        koth_state['king_streak'] = 0
-        save_data()
-        await ctx.send("👑 King of the Hill session has been ended.")
-        
-    elif gamemode == "draftclash":
-        if ch not in draft_clash_sessions:
-            await ctx.send("No active Draft Clash session in this channel.")
-            return
-        
-        # Only host can end
-        session = draft_clash_sessions[ch]
-        if str(ctx.author.id) != session.get('host') and ctx.author.id != PRIVILEGED_USER_ID:
-            await ctx.send("Only the session host or privileged user can end Draft Clash.")
-            return
-            
-        del draft_clash_sessions[ch]
-        save_data()
-        await ctx.send("⚡ Draft Clash session has been ended.")
-        
-    else:
-        await ctx.send("❌ Unknown game mode. Available: koth, draftclash")
+    return (g1, g2), narrative, events
 
 def load_koth(file):
     if os.path.exists(file):
@@ -2967,146 +2088,97 @@ async def koth(ctx, action: str = None, mode: str = None):
         await ctx.send("Use `!koth start` or `!koth add`.")
         return
 
+
 @bot.command()
 async def challenge(ctx, opponent: discord.Member = None):
-    """Challenge someone in the active KoTH session. Use: !challenge @user"""
+    """Challenge someone in KoTH — open to anyone with a lineup."""
     if opponent is None:
         await ctx.send("⚠️ You must mention someone to challenge. Usage: `!challenge @user`")
         return
 
-    chan = str(ctx.channel.id)
+    challenger_id = str(ctx.author.id)
+    opponent_id = str(opponent.id)
 
-    # select target session: prefer draft session (only 1 per channel), else pick first active auction session
+    # lineup checks
+    if challenger_id not in user_lineups:
+        await ctx.send(f"⚠️ {ctx.author.display_name}, you don’t have a lineup. Use `!setlineup` first.")
+        return
+    if opponent_id not in user_lineups:
+        await ctx.send(f"⚠️ {opponent.display_name} doesn’t have a lineup yet. They must set one with `!setlineup`.")
+        return
+
+    # pick session (prefer draft if active in channel else auction default)
+    chan = str(ctx.channel.id)
     target = None
     mode = None
     session_id = None
-
     if chan in koth_draft and koth_draft[chan].get("active"):
-        target = koth_draft[chan]
-        mode = "draft"
-        session_id = target.get("id")
+        target = koth_draft[chan]; mode="draft"; session_id = target.get("id")
     else:
-        auction_sessions = koth_auction.get(chan, {})
-        for sid, sess in (auction_sessions.items() if auction_sessions else []):
-            if sess.get("active"):
-                target = sess
-                mode = "auction"
-                session_id = sid
-                break
-
-    if not target:
-        await ctx.send("⚠️ No active KoTH session in this channel. Start one with `!koth start auction` or `!koth start draftclash`.")
-        return
-
-    # membership check
-    challenger_id = str(ctx.author.id)
-    opponent_id = str(opponent.id)
-    players = target.get("players", [])
-
-    if challenger_id not in players or opponent_id not in players:
-        await ctx.send("⚠️ Both challenger and opponent must be added to the KoTH session via `!koth add`.")
-        return
-
-    # lineup checks (require a saved lineup)
-    if challenger_id not in user_lineups:
-        await ctx.send(f"⚠️ {ctx.author.display_name}, you don't have a lineup set. Use `!setlineup` first.")
-        return
-    if opponent_id not in user_lineups:
-        await ctx.send(f"⚠️ {opponent.display_name} doesn't have a lineup set. They must set a lineup with `!setlineup`.")
-        return
-
-    # helper to build member-like object needed by simulate_match display
-    async def _get_member_like(uid):
-        try:
-            m = ctx.guild.get_member(int(uid))
-            if m:
-                return m
-            u = await bot.fetch_user(int(uid))
-            class L: pass
-            o = L()
-            o.display_name = getattr(u, "display_name", getattr(u, "name", str(u)))
-            return o
-        except Exception:
-            class L: pass
-            o = L()
-            o.display_name = f"User {uid}"
-            return o
-
-    member1 = await _get_member_like(challenger_id)
-    member2 = await _get_member_like(opponent_id)
-
-    # run simulation - handle different possible return formats robustly
-    try:
-        sim = simulate_match(challenger_id, opponent_id, member1, member2)
-    except Exception as e:
-        await ctx.send(f"⚠️ Error running match simulation: {e}")
-        return
-
-    if not sim:
-        await ctx.send("⚠️ Match could not be simulated.")
-        return
-
-    # expected: ( (goals_a, goals_b), narrative, scores )
-    # but be defensive
-    try:
-        if isinstance(sim[0], (list, tuple)) and len(sim[0]) == 2:
-            scoreline = sim[0]
-            narrative = sim[1] if len(sim) > 1 else ""
-            scores = sim[2] if len(sim) > 2 else None
+        # pick or create default auction session for channel
+        auction_sessions = koth_auction.setdefault(chan, {})
+        if auction_sessions:
+            # pick first active session
+            found = None
+            for sid,sess in auction_sessions.items():
+                if sess.get("active"):
+                    found = sess; session_id = sid; break
+            if found:
+                target = found; mode="auction"
+            else:
+                # create a default auction session entry
+                sid = "default"
+                target = auction_sessions.setdefault(sid, {"id":sid,"king":None,"streak":0,"players":[],"active":True})
+                session_id = sid; mode="auction"
         else:
-            # fallback try: sim == ((a,b), narrative, scores)
-            scoreline, narrative, scores = sim
-            scoreline = tuple(scoreline)
-    except Exception:
-        # last attempt: try unpack simple
-        try:
-            scoreline = tuple(sim[0])
-            narrative = sim[1] if len(sim) > 1 else ""
-            scores = sim[2] if len(sim) > 2 else None
-        except Exception:
-            await ctx.send("⚠️ Simulation returned unexpected format; cannot parse result.")
-            return
+            # create default session
+            sid = "default"
+            auction_sessions[sid] = {"id":sid,"king":None,"streak":0,"players":[],"active":True}
+            target = auction_sessions[sid]; session_id = sid; mode="auction"
 
-    a_goals, b_goals = int(scoreline[0]), int(scoreline[1])
+    # run simulation
+    member1 = ctx.author
+    member2 = opponent
+    try:
+        scoreline, narrative, events = simulate_match(challenger_id, opponent_id, member1, member2)
+    except Exception as e:
+        await ctx.send(f"⚠️ Error simulating match: {e}")
+        return
 
-    # create rich embed
-    session_label = f" (session {session_id})" if session_id else ""
-    title = f"⚔️ KoTH{session_label} — {ctx.author.display_name} vs {opponent.display_name}"
-    embed = discord.Embed(title=title, color=discord.Color.blurple())
-    embed.add_field(name="Score", value=f"**{a_goals} - {b_goals}**", inline=False)
-    if narrative:
-        # truncate if too long
-        summary = narrative if len(narrative) <= 1000 else (narrative[:980] + "…")
-        embed.add_field(name="Match Summary", value=summary, inline=False)
+    a_goals, b_goals = scoreline
 
-    # determine winner
-    if a_goals > b_goals:
-        winner = challenger_id
-    elif b_goals > a_goals:
-        winner = opponent_id
-    else:
-        winner = None
+    # send commentary instantly
+    await ctx.send(narrative)
 
-    # update KoTH state with safe logic
+    # determine winner & update KoTH
     if target.get("king") is None:
+        if a_goals > b_goals:
+            winner = challenger_id
+        elif b_goals > a_goals:
+            winner = opponent_id
+        else:
+            winner = None
+
         if winner:
             target["king"] = winner
             target["streak"] = 1
-            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> wins the first battle! 🏆 Streak: 1"
+            await ctx.send(f"👑 | **A New King is Crowned!** <@{winner}> wins the first battle! 🏆 Streak: 1")
         else:
-            result_msg = "🤝 It's a draw — no King yet."
+            await ctx.send("🤝 It's a draw! No King yet.")
     else:
-        current_king = target.get("king")
-        if winner is None:
-            result_msg = "🤝 It's a draw! No change to the throne."
-        elif winner == current_king:
-            target["streak"] = target.get("streak", 0) + 1
-            result_msg = f"👑 | **The King Defends the Throne!** <@{winner}> wins again! 🔥 Streak: {target['streak']}"
+        current = target.get("king")
+        if a_goals == b_goals:
+            await ctx.send("🤝 It's a draw! The King stays on the throne.")
         else:
-            prev = current_king
-            target["king"] = winner
-            target["streak"] = 1
-            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> dethrones <@{prev}>! 🏆 Streak: 1"
+            winner = challenger_id if a_goals > b_goals else opponent_id
+            if winner == current:
+                target["streak"] = target.get("streak",0) + 1
+                await ctx.send(f"👑 | **The King Defends the Throne!** <@{winner}> wins again! 🔥 Streak: {target['streak']}")
+            else:
+                prev = current
+                target["king"] = winner
+                target["streak"] = 1
+                await ctx.send(f"👑 | **A New King is Crowned!** <@{winner}> dethrones <@{prev}>! 🏆 Streak: 1")
 
     # persist
     try:
@@ -3114,15 +2186,10 @@ async def challenge(ctx, opponent: discord.Member = None):
             _save_json(KOTH_DRAFT_FILE, koth_draft)
         else:
             _save_json(KOTH_AUCTION_FILE, koth_auction)
-    except Exception as e:
-        # saving failed but state updated in memory; warn
-        await ctx.send(f"⚠️ Warning: could not save KoTH state: {e}")
+    except Exception:
+        pass
 
-    # send embed + result
-    await ctx.send(embed=embed)
-    await ctx.send(result_msg)
     return
-
 
 @bot.command()
 async def kingstatus(ctx):
