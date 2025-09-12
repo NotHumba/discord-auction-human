@@ -1543,27 +1543,32 @@ async def rebid(ctx):
 
     async def auto_sold():
         try:
-            if not auction_state.get('bidding', False) or auction_state.get(
-                    'current_player') != player:
+            if not auction_state.get(
+                    'bidding', False) or auction_state.get(
+                            'current_player') != player:
                 return
             await asyncio.sleep(7)
-            if not auction_state.get('bidding', False) or auction_state.get(
-                    'current_player') != player:
+            if not auction_state.get(
+                    'bidding', False) or auction_state.get(
+                            'current_player') != player:
                 return
             await ctx.send("⌛ Going once...")
             await asyncio.sleep(1)
-            if not auction_state.get('bidding', False) or auction_state.get(
-                    'current_player') != player:
+            if not auction_state.get(
+                    'bidding', False) or auction_state.get(
+                            'current_player') != player:
                 return
             await ctx.send("⌛ Going twice...")
             await asyncio.sleep(1)
-            if not auction_state.get('bidding', False) or auction_state.get(
-                    'current_player') != player:
+            if not auction_state.get(
+                    'bidding', False) or auction_state.get(
+                            'current_player') != player:
                 return
             await ctx.send("⌛ Final call...")
             await asyncio.sleep(1)
-            if not auction_state.get('bidding', False) or auction_state.get(
-                    'current_player') != player:
+            if not auction_state.get(
+                    'bidding', False) or auction_state.get(
+                            'current_player') != player:
                 return
             await _finalize_sold(ctx)
         except asyncio.CancelledError:
@@ -2120,8 +2125,7 @@ async def rankteams(ctx):
             'tactic': 'Balanced',
             'formation': '4-4-2'
         })
-        players_in_lineup = lineup_data['players'] if lineup_data[
-            'players'] else user_teams.get(user_id, [])[:MAX_LINEUP_PLAYERS]
+        players_in_lineup = lineup_data['players'] if lineup_data['players'] else user_teams.get(user_id, [])[:MAX_LINEUP_PLAYERS]
 
         positions_covered = set(p['position'].lower()
                                 for p in players_in_lineup)
@@ -2338,204 +2342,100 @@ draft_clash_wins = {}
 @bot.command()
 async def draftclash(ctx, action: str = None):
     """Draft Clash command without player limitations."""
-    ch = ctx.channel.id
-    if action is None:
-        await ctx.send("Usage: !draftclash start|join|begin|status|pick <1-3>|koth")
-        return
-        
-    action = action.lower()
-    if action == 'start':
-        if ch in draft_clash_sessions and draft_clash_sessions[ch].get('state') in ('lobby', 'drafting'):
-            await ctx.send("A draft is already in this channel.")
+    try:
+        ch = ctx.channel.id
+        if action is None:
+            await ctx.send("Usage: !draftclash start|join|begin|status|pick <1-3>|koth")
             return
             
-        draft_clash_sessions[ch] = {
-            'host': str(ctx.author.id),
-            'players': [str(ctx.author.id)],
-            'state': 'lobby', 
-            'round': 0,
-            'picks': {},
-            'available_pool': [],
-            'set_key': None
-        }
-        save_data()
-        await ctx.send(f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start.")
-        return
-
-    session = draft_clash_sessions.get(ch)
-    if not session:
-        await ctx.send("No active draft lobby. Start with `!draftclash start`.")
-        return
-
-    if action == 'join':
-        if session['state'] != 'lobby':
-            await ctx.send("Draft already in progress.")
-            return
-            
-        session['players'].append(str(ctx.author.id))
-        save_data()
-        await ctx.send(f"{ctx.author.mention} joined the draft! ({len(session['players'])} players)")
-        return
-    if action == 'begin':
-        if str(ctx.author.id) != session['host']:
-            await ctx.send("Only host can begin.")
-            return
-        # optional set key
-        parts = ctx.message.content.strip().split()
-        set_key = None
-        if len(parts) > 2: set_key = parts[2].strip().lower()
-        session['set_key'] = set_key or '24-25'
-        session['state'] = 'drafting'
-        session['round'] = 1
-        session['picks'] = {uid: [] for uid in session['players']}
-        # Build pool from available players
-        pool = []
-        for pos in available_positions:
-            tiered_players = load_players_by_position(pos, session['set_key'])
-            for tier in ['A', 'B', 'C']:
-                pool.extend(tiered_players[tier])
-        random.shuffle(pool)
-        session['available_pool'] = pool[:60]
-        await _draft_offer(ctx, session)
-        save_data()
-        return
-    if action == 'status':
-        await ctx.send(
-            f"Draft status: {session['state']}, players: {', '.join(session['players'])}, round: {session['round']}"
-        )
-        return
-    if action == 'pick':
-        parts = ctx.message.content.strip().split()
-        if len(parts) < 3:
-            await ctx.send("Use `!draftclash pick <1|2|3>`")
-            return
-        try:
-            idx = int(parts[2])
-        return
-    if action == 'status':
-        await ctx.send(
-            f"Draft status: {session['state']}, players: {', '.join(session['players'])}, round: {session['round']}"
-        )
-        return
-    if action == 'pick':
-        parts = ctx.message.content.strip().split()
-        if len(parts) < 3:
-            await ctx.send("Use `!draftclash pick <1|2|3>`")
-            return
-        try:
-            idx = int(parts[2])
-            assert idx in (1, 2, 3)
-        except:
-            await ctx.send("Choice must be 1,2 or 3")
-            return
-        await _draft_pick(ctx, session, idx - 1)
-        save_data()
-        return
-    if action == 'koth':
-        # Check if user participated in a completed draft and has a lineup
-        user_id = str(ctx.author.id)
-        if user_id not in user_lineups or not user_lineups[user_id]:
-            await ctx.send("❌ You don't have any lineups yet. Complete a draft first!")
-            return
-        
-        active_lineup_name = active_lineups.get(user_id, 'main')
-        if active_lineup_name not in user_lineups[user_id] or not user_lineups[user_id][active_lineup_name].get('players'):
-            await ctx.send("❌ You don't have a draft lineup yet. Complete a draft first!")
-            return
-            
-        # Check if user was in this channel's draft session
-        if session and user_id not in session.get('players', []):
-            await ctx.send("❌ You didn't participate in this channel's draft session.")
-            return
-            
-        # If no current king, user becomes king
-        if koth_state['current_king_id'] is None:
-            koth_state['current_king_id'] = user_id
-            koth_state['king_streak'] = 0
+        action = action.lower()
+        if action == 'start':
+            if ch in draft_clash_sessions and draft_clash_sessions[ch].get('state') in ('lobby', 'drafting'):
+                await ctx.send("A draft is already in this channel.")
+                return
+                
+            draft_clash_sessions[ch] = {
+                'host': str(ctx.author.id),
+                'players': [str(ctx.author.id)],
+                'state': 'lobby', 
+                'round': 0,
+                'picks': {},
+                'available_pool': [],
+                'set_key': None
+            }
             save_data()
-            await ctx.send(f"👑 {ctx.author.mention} claims the throne as the new King of the Hill with their drafted lineup!")
-            return
-            
-        # Challenge the current king
-        current_king = koth_state['current_king_id']
-        if current_king == user_id:
-            await ctx.send("👑 You're already the King! Defend your throne against challengers.")
+            await ctx.send(f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start.")
             return
 
-        # Simulate battle between challenger and king
-        try:
-            king_user = await bot.fetch_user(int(current_king))
-            challenger_user = ctx.author
+        session = draft_clash_sessions.get(ch)
+        if not session:
+            await ctx.send("No active draft lobby. Start with `!draftclash start`.")
+            return
+
+        if action == 'join':
+            if session['state'] != 'lobby':
+                await ctx.send("Draft already in progress.")
+                return
+                
+            session['players'].append(str(ctx.author.id))
+            save_data()
+            await ctx.send(f"{ctx.author.mention} joined the draft! ({len(session['players'])} players)")
+            return
             
-            class MockUser:
-                def __init__(self, display_name):
-                    self.display_name = display_name
+        elif action == 'begin':
+            if str(ctx.author.id) != session['host']:
+                await ctx.send("Only host can begin.")
+                return
+                
+            parts = ctx.message.content.strip().split()
+            set_key = None
+            if len(parts) > 2:
+                set_key = parts[2].strip().lower()
+            session['set_key'] = set_key or '24-25'
+            session['state'] = 'drafting'
+            session['round'] = 1
+            session['picks'] = {uid: [] for uid in session['players']}
             
-            king_mock = MockUser(king_user.display_name)
-            challenger_mock = MockUser(challenger_user.display_name)
+            # Build pool from available players
+            pool = []
+            for pos in available_positions:
+                tiered_players = load_players_by_position(pos, session['set_key'])
+                for tier in ['A', 'B', 'C']:
+                    pool.extend(tiered_players[tier])
+            random.shuffle(pool)
+            session['available_pool'] = pool[:60]
+            await _draft_offer(ctx, session)
+            save_data()
+            return
             
-            result = simulate_match(current_king, user_id, king_mock, challenger_mock)
+        elif action == 'pick':
+            parts = ctx.message.content.strip().split()
+            if len(parts) < 3:
+                await ctx.send("Use `!draftclash pick <1|2|3>`")
+                return
+            try:
+                idx = int(parts[2])
+                assert idx in (1, 2, 3)
+            except:
+                await ctx.send("Choice must be 1, 2 or 3")
+                return
+            await _draft_pick(ctx, session, idx - 1)
+            save_data()
+            return
             
-            if isinstance(result, tuple):
-                scoreline, narrative, scores = result
-                king_score, challenger_score = scoreline
-                
-                embed = discord.Embed(title="🏆 King of the Hill Battle", 
-                                     description=narrative, 
-                                     color=discord.Color.gold())
-                embed.add_field(name=f"👑 {king_user.display_name} (King)", 
-                               value=f"Score: {king_score}", inline=True)
-                embed.add_field(name=f"⚔️ {challenger_user.display_name} (Challenger)", 
-                               value=f"Score: {challenger_score}", inline=True)
-                
-                if challenger_score > king_score:
-                    # Challenger wins, becomes new king
-                    old_streak = koth_state['king_streak']
-                    koth_state['longest_reigns'][current_king] = max(
-                        koth_state['longest_reigns'].get(current_king, 0), old_streak)
-                    
-                    koth_state['current_king_id'] = user_id
-                    koth_state['king_streak'] = 0
-                    koth_state['history'].append({
-                        'old_king': current_king,
-                        'new_king': user_id,
-                        'streak_ended': old_streak
-                    })
-                    
-                    embed.add_field(name="🏆 Result", 
-                                   value=f"{challenger_user.mention} defeats the king and claims the throne!", 
-                                   inline=False)
-                    
-                    # Update user stats
-                    ensure_user_structures(user_id)
-                    ensure_user_structures(current_king)
-                    user_stats[user_id]['wins'] = user_stats[user_id].get('wins', 0) + 1
-                    user_stats[current_king]['losses'] = user_stats[current_king].get('losses', 0) + 1
-                    
-                else:
-                    # King defends successfully
-                    koth_state['king_streak'] += 1
-                    embed.add_field(name="🛡️ Result", 
-                                   value=f"{king_user.display_name} successfully defends the throne! Streak: {koth_state['king_streak']}", 
-                                   inline=False)
-                    
-                    # Update user stats
-                    ensure_user_structures(user_id)
-                    ensure_user_structures(current_king)
-                    user_stats[current_king]['wins'] = user_stats[current_king].get('wins', 0) + 1
-                    user_stats[user_id]['losses'] = user_stats[user_id].get('losses', 0) + 1
-                
-                save_data()
-                await ctx.send(embed=embed)
-                
-            else:
-                await ctx.send("❌ Error simulating the battle. Please try again.")
-                
-        except Exception as e:
-            await ctx.send(f"❌ Error during KoTH battle: {str(e)}")
+        elif action == 'status':
+            await ctx.send(f"Draft status: {session['state']}, players: {', '.join(session['players'])}, round: {session['round']}")
+            return
+            
+        elif action == 'koth':
+            # Handle koth action
+            await handle_koth_action(ctx, session)
+            return
+            
+        await ctx.send("Unknown action for draftclash.")
         
-        return
-    await ctx.send("Unknown action for draftclash.")
+    except Exception as e:
+        await ctx.send(f"❌ Error in draftclash command: {str(e)}")
 
 
 async def _draft_offer(ctx, session):
@@ -2839,7 +2739,7 @@ async def koth(ctx, action: str = None, mode: str = None):
                 if chan in koth_draft and koth_draft[chan].get("active"):
                     await ctx.send("⚠️ A Draft Clash KoTH is already running in this channel!")
                     return
-                    
+                
                 koth_draft[chan] = {
                     "id": str(uuid.uuid4())[:8],
                     "king": None,
@@ -2925,7 +2825,7 @@ async def challenge(ctx, opponent: discord.Member = None):
 
     chan = str(ctx.channel.id)
 
-    # select target session: prefer draft session (only 1 allowed per channel), else pick first active auction session
+    # select target session: prefer draft session (only one allowed per channel), else pick first active auction session
     target = None
     mode = None
     session_id = None
@@ -3106,93 +3006,6 @@ async def kingstatus(ctx):
 @bot.command()
 async def kothleaderboard(ctx):
     """Show a simple KoTH leaderboard based on current recorded streaks."""
-    try:
-        boards = {}
-        # auction: flatten sessions
-        for chan, sessions in (koth_auction.items() if isinstance(koth_auction, dict) else []):
-            for sid, s in (sessions.items() if isinstance(sessions, dict) else []):
-                if s.get("king"):
-                    uid = s.get("king")
-                    boards[uid] = max(boards.get(uid, 0), s.get("streak", 0))
-        # draft:
-        for chan, s in (koth_draft.items() if isinstance(koth_draft, dict) else []):
-            if s.get("king"):
-                uid = s.get("king")
-                boards[uid] = max(boards.get(uid, 0), s.get("streak", 0))
-
-        if not boards:
-            await ctx.send("No KoTH reigns recorded yet.")
-            return
-
-        items = sorted(boards.items(), key=lambda x: x[1], reverse=True)[:10]
-        desc = "\n".join([f"{i+1}. <@{uid}> — {streak} defenses" for i, (uid, streak) in enumerate(items)])
-        embed = discord.Embed(title="🏆 KoTH Leaderboard", description=desc, color=discord.Color.gold())
-        await ctx.send(embed=embed)
-        
-    except Exception as e:
-        await ctx.send(f"❌ Error generating leaderboard: {str(e)}")
-    else:
-        current_king = target.get("king")
-        if winner is None:
-            result_msg = "🤝 It's a draw! No change to the throne."
-        elif winner == current_king:
-            target["streak"] = target.get("streak", 0) + 1
-            result_msg = f"👑 | **The King Defends the Throne!** <@{winner}> wins again! 🔥 Streak: {target['streak']}"
-        else:
-            prev = current_king
-            target["king"] = winner
-            target["streak"] = 1
-            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> dethrones <@{prev}>! 🏆 Streak: 1"
-
-    # persist
-    try:
-        if mode == "draft":
-            _save_json(KOTH_DRAFT_FILE, koth_draft)
-        else:
-            _save_json(KOTH_AUCTION_FILE, koth_auction)
-    except Exception as e:
-        # saving failed but state updated in memory; warn
-        await ctx.send(f"⚠️ Warning: could not save KoTH state: {e}")
-
-    # send embed + result
-    await ctx.send(embed=embed)
-    await ctx.send(result_msg)
-    return
-
-
-@bot.command()
-async def kingstatus(ctx):
-    """Show current KoTH king(s) in this channel."""
-    chan = str(ctx.channel.id)
-    # Prefer draft session info (only one allowed per channel)
-    if chan in koth_draft and koth_draft[chan].get("active"):
-        s = koth_draft[chan]
-        if s.get("king"):
-            await ctx.send(f"👑 Current Draft KoTH King: <@{s['king']}> | 🔥 Streak: {s.get('streak', 0)}")
-        else:
-            await ctx.send("No Draft KoTH King yet. Add players and challenge!")
-        return
-
-    # Show auction sessions (can be multiple)
-    auction_sessions = koth_auction.get(chan, {})
-    active = {sid: ses for sid, ses in (auction_sessions.items() if auction_sessions else []) if ses.get("active")}
-    if not active:
-        await ctx.send("No active KoTH sessions in this channel.")
-        return
-
-    lines = []
-    for sid, s in active.items():
-        king = f"<@{s['king']}>" if s.get("king") else "— No King yet —"
-        lines.append(f"• ID `{sid}` — King: {king} — Streak: {s.get('streak', 0)} — Players: {len(s.get('players', []))}")
-
-    # chunk message if very long
-    msg = "\n".join(lines)
-    await ctx.send(msg)
-
-
-@bot.command()
-async def kothleaderboard(ctx):
-    """Show a simple KoTH leaderboard based on current recorded streaks."""
     boards = {}
     # auction: flatten sessions
     for chan, sessions in (koth_auction.items() if isinstance(koth_auction, dict) else []):
@@ -3243,7 +3056,6 @@ async def koth_list(ctx, mode: str = None):
         return
     else:
         await ctx.send("Usage: `!koth_list auction` or `!koth_list draftclash`")
-
 
 keep_alive()
 
