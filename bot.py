@@ -2816,108 +2816,105 @@ koth_draft = load_koth(KOTH_DRAFT_FILE)
 
 @bot.command()
 async def koth(ctx, action: str = None, mode: str = None):
-    """Manage KoTH sessions without player limits.
-    Usage:
-      !koth start auction
-      !koth start draftclash  
-      !koth add <session_id?> @user1 @user2
-    """
+    """Manage KoTH sessions without player limits."""
     chan = str(ctx.channel.id)
-    
-    if action == "start":
-        if mode == "auction":
-            session_id = str(uuid.uuid4())[:8]
-            koth_auction.setdefault(chan, {})
-            koth_auction[chan][session_id] = {
-                "id": session_id,
-                "king": None,
-                "streak": 0,
-                "players": [],
-                "active": True,
-                "created_by": str(ctx.author.id),
-                "created_at": time.time()
-            }
-            _save_json(KOTH_AUCTION_FILE, koth_auction)
-            await ctx.send(f"🏟️ Auction KoTH started (ID `{session_id}`)")
-            return
-        elif mode == "draftclash":
-            if chan in koth_draft and koth_draft[chan].get("active"):
-                await ctx.send("⚠️ A Draft Clash KoTH is already running in this channel!")
-                return
-            koth_draft[chan] = {
-                "id": str(uuid.uuid4())[:8],
-                "king": None,
-                "streak": 0,
-                "players": [],
-                "active": True,
-                "created_by": str(ctx.author.id),
-                "created_at": time.time()
-            }
-            _save_json(KOTH_DRAFT_FILE, koth_draft)
-            await ctx.send("🏆 Draft Clash KoTH started! Use `!koth add @user1 @user2` to add players.")
-            return
-        else:
-            await ctx.send("Please specify mode: `!koth start auction` or `!koth start draftclash`")
-            return
-            
-    elif action == "add":
-        # syntax: !koth add [session_id] @user1 @user2...
-        parts = ctx.message.content.split()
-        args = parts[2:]
-        if not args:
-            await ctx.send("Usage: `!koth add <session_id?> @user1 @user2`")
-            return
-            
-        session_id = None
-        if not args[0].startswith("<@") and not args[0].startswith("@") and not args[0].isdigit():
-            session_id = args[0]
-            mention_args = args[1:]
-        else:
-            mention_args = args
-            
-        # resolve target session: prefer draft if exists
-        target_session = None
-        target_mode = None
-        if chan in koth_draft and koth_draft[chan].get("active"):
-            target_session = koth_draft[chan]
-            target_mode = "draft"
-        else:
-            auction_sessions = koth_auction.get(chan, {})
-            if session_id:
-                target_session = auction_sessions.get(session_id)
-                target_mode = "auction"
-                if not target_session:
-                    await ctx.send("No such Auction KoTH session id in this channel.")
-                    return
-            else:
-                for sid, sess in auction_sessions.items():
-                    if sess.get("active"):
-                        target_session = sess
-                        target_mode = "auction"
-                        break
-                        
-        if not target_session:
-            await ctx.send("No active KoTH session found to add players.")
-            return
-            
-        added = []
-        for m in ctx.message.mentions:
-            uid = str(m.id)
-            if uid not in target_session["players"]:
-                target_session["players"].append(uid)
-                added.append(m.mention)
+    try:
+        if action == "start":
+            if mode == "auction":
+                session_id = str(uuid.uuid4())[:8]
+                koth_auction.setdefault(chan, {})
+                koth_auction[chan][session_id] = {
+                    "id": session_id,
+                    "king": None,
+                    "streak": 0,
+                    "players": [],
+                    "active": True,
+                    "created_by": str(ctx.author.id),
+                    "created_at": time.time()
+                }
+                _save_json(KOTH_AUCTION_FILE, koth_auction)
+                await ctx.send(f"🏟️ Auction KoTH started (ID `{session_id}`)")
                 
-        if target_mode == "draft":
-            _save_json(KOTH_DRAFT_FILE, koth_draft)
-        else:
-            _save_json(KOTH_AUCTION_FILE, koth_auction)
+            elif mode == "draftclash":
+                if chan in koth_draft and koth_draft[chan].get("active"):
+                    await ctx.send("⚠️ A Draft Clash KoTH is already running in this channel!")
+                    return
+                    
+                koth_draft[chan] = {
+                    "id": str(uuid.uuid4())[:8],
+                    "king": None,
+                    "streak": 0,
+                    "players": [],
+                    "active": True,
+                    "created_by": str(ctx.author.id),
+                    "created_at": time.time()
+                }
+                _save_json(KOTH_DRAFT_FILE, koth_draft)
+                await ctx.send("🏆 Draft Clash KoTH started! Use `!koth add @user1 @user2` to add players.")
+                
+            else:
+                await ctx.send("Please specify mode: `!koth start auction` or `!koth start draftclash`")
+                
+        elif action == "add":
+            # syntax: !koth add [session_id] @user1 @user2...
+            parts = ctx.message.content.split()
+            args = parts[2:]
+            if not args:
+                await ctx.send("Usage: `!koth add <session_id?> @user1 @user2`")
+                return
+                
+            session_id = None
+            if not args[0].startswith("<@") and not args[0].startswith("@") and not args[0].isdigit():
+                session_id = args[0]
+                mention_args = args[1:]
+            else:
+                mention_args = args
+                
+            # resolve target session: prefer draft if exists
+            target_session = None
+            target_mode = None
             
-        await ctx.send(f"Added to KoTH: {', '.join(added)}")
-        return
-        
-    else:
-        await ctx.send("Use `!koth start` or `!koth add`.")
-        return
+            if chan in koth_draft and koth_draft[chan].get("active"):
+                target_session = koth_draft[chan]
+                target_mode = "draft"
+            else:
+                auction_sessions = koth_auction.get(chan, {})
+                if session_id:
+                    target_session = auction_sessions.get(session_id)
+                    target_mode = "auction"
+                    if not target_session:
+                        await ctx.send("No such Auction KoTH session id in this channel.")
+                        return
+                else:
+                    for sid, sess in auction_sessions.items():
+                        if sess.get("active"):
+                            target_session = sess
+                            target_mode = "auction"
+                            break
+                            
+            if not target_session:
+                await ctx.send("No active KoTH session found to add players.")
+                return
+                
+            added = []
+            for m in ctx.message.mentions:
+                uid = str(m.id)
+                if uid not in target_session["players"]:
+                    target_session["players"].append(uid)
+                    added.append(m.mention)
+                    
+            if target_mode == "draft":
+                _save_json(KOTH_DRAFT_FILE, koth_draft)
+            else:
+                _save_json(KOTH_AUCTION_FILE, koth_auction)
+                
+            await ctx.send(f"Added to KoTH: {', '.join(added)}")
+            
+        else:
+            await ctx.send("Use `!koth start` or `!koth add`.")
+            
+    except Exception as e:
+        await ctx.send(f"⚠️ Error in KoTH command: {str(e)}")
     elif action == "add":
         # syntax: !koth add [session_id] @user1 @user2...
         parts = ctx.message.content.split()
