@@ -2915,58 +2915,6 @@ async def koth(ctx, action: str = None, mode: str = None):
             
     except Exception as e:
         await ctx.send(f"⚠️ Error in KoTH command: {str(e)}")
-    elif action == "add":
-        # syntax: !koth add [session_id] @user1 @user2...
-        parts = ctx.message.content.split()
-        args = parts[2:]
-        if not args:
-            await ctx.send("Usage: `!koth add <session_id?> @user1 @user2`")
-            return
-        session_id = None
-        if not args[0].startswith("<@") and not args[0].startswith("@") and not args[0].isdigit():
-            session_id = args[0]
-            mention_args = args[1:]
-        else:
-            mention_args = args
-        # resolve target session: prefer draft if exists
-        target_session = None
-        target_mode = None
-        if chan in koth_draft and koth_draft[chan].get("active"):
-            target_session = koth_draft[chan]; target_mode="draft"
-        else:
-            auction_sessions = koth_auction.get(chan, {})
-            if session_id:
-                target_session = auction_sessions.get(session_id); target_mode="auction"
-                if not target_session:
-                    await ctx.send("No such Auction KoTH session id in this channel.")
-                    return
-            else:
-                for sid,sess in auction_sessions.items():
-                    if sess.get("active"):
-                        target_session=sess; target_mode="auction"; break
-        if not target_session:
-            await ctx.send("No active KoTH session found to add players.")
-            return
-        added=[]
-        for m in ctx.message.mentions:
-            uid=str(m.id)
-            # check lineup existence
-            if uid not in user_lineups:
-                await ctx.send(f"⚠️ {m.display_name} has no lineup set. They must set a lineup first.")
-                continue
-            # For draft mode, ideally check draft-specific lineup; here we assume users set distinct lineup
-            if uid not in target_session["players"]:
-                target_session["players"].append(uid)
-                added.append(m.mention)
-        if target_mode=="draft":
-            _save_json(KOTH_DRAFT_FILE, koth_draft)
-        else:
-            _save_json(KOTH_AUCTION_FILE, koth_auction)
-        await ctx.send(f"Added to KoTH: {', '.join(added)}")
-        return
-    else:
-        await ctx.send("Use `!koth start` or `!koth add`.")
-        return
 
 @bot.command()
 async def challenge(ctx, opponent: discord.Member = None):
@@ -3158,21 +3106,31 @@ async def kingstatus(ctx):
 @bot.command()
 async def kothleaderboard(ctx):
     """Show a simple KoTH leaderboard based on current recorded streaks."""
-    boards = {}
-    # auction: flatten sessions
-    for chan, sessions in (koth_auction.items() if isinstance(koth_auction, dict) else []):
-        for sid, s in (sessions.items() if isinstance(sessions, dict) else []):
+    try:
+        boards = {}
+        # auction: flatten sessions
+        for chan, sessions in (koth_auction.items() if isinstance(koth_auction, dict) else []):
+            for sid, s in (sessions.items() if isinstance(sessions, dict) else []):
+                if s.get("king"):
+                    uid = s.get("king")
+                    boards[uid] = max(boards.get(uid, 0), s.get("streak", 0))
+        # draft:
+        for chan, s in (koth_draft.items() if isinstance(koth_draft, dict) else []):
             if s.get("king"):
                 uid = s.get("king")
                 boards[uid] = max(boards.get(uid, 0), s.get("streak", 0))
-    # draft:
-    for chan, s in (koth_draft.items() if isinstance(koth_draft, dict) else []):
-        if s.get("king"):
-            target["king"] = winner
-            target["streak"] = 1
-            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> wins the first battle! 🏆 Streak: 1"
-        else:
-            result_msg = "🤝 It's a draw — no King yet."
+
+        if not boards:
+            await ctx.send("No KoTH reigns recorded yet.")
+            return
+
+        items = sorted(boards.items(), key=lambda x: x[1], reverse=True)[:10]
+        desc = "\n".join([f"{i+1}. <@{uid}> — {streak} defenses" for i, (uid, streak) in enumerate(items)])
+        embed = discord.Embed(title="🏆 KoTH Leaderboard", description=desc, color=discord.Color.gold())
+        await ctx.send(embed=embed)
+        
+    except Exception as e:
+        await ctx.send(f"❌ Error generating leaderboard: {str(e)}")
     else:
         current_king = target.get("king")
         if winner is None:
