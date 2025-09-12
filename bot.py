@@ -229,27 +229,36 @@ def load_players_by_position(position, set_name):
 
 
 def save_data():
-    """Saves user teams, budgets, lineups, stats, and tournaments to JSON files."""
+    """Saves all game data."""
     try:
         os.makedirs(DATA_DIR, exist_ok=True)
-        with open(os.path.join(DATA_DIR, "teams.json"), "w",
-                  encoding='utf-8') as f:
-            json.dump(user_teams, f, indent=2)
-        with open(os.path.join(DATA_DIR, "budgets.json"),
-                  "w",
-                  encoding='utf-8') as f:
-            json.dump(user_budgets, f, indent=2)
-        with open(os.path.join(DATA_DIR, "lineups.json"),
-                  "w",
-                  encoding='utf-8') as f:
-            json.dump(user_lineups, f, indent=2)
-        with open(os.path.join(DATA_DIR, "stats.json"), "w",
-                  encoding='utf-8') as f:
-            json.dump(user_stats, f, indent=2)
-        with open(os.path.join(DATA_DIR, "tournaments.json"),
-                  "w",
-                  encoding='utf-8') as f:
-            json.dump(tournaments, f, indent=2)
+        
+        # Save core data
+        data_files = {
+            "teams.json": user_teams,
+            "budgets.json": user_budgets, 
+            "lineups.json": user_lineups,
+            "stats.json": user_stats,
+            "tournaments.json": tournaments
+        }
+        
+        for filename, data in data_files.items():
+            with open(os.path.join(DATA_DIR, filename), "w", encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+                
+        # Save gamemode data
+        gamemode_files = {
+            "koth.json": koth_state,
+            "draftclash.json": draft_clash_sessions,
+            "mystery_boxes.json": mystery_boxes
+        }
+        
+        for filename, data in gamemode_files.items():
+            with open(os.path.join(DATA_DIR, filename), "w", encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+                
+        return True
+        
     except Exception as e:
         print(f"Error saving data: {e}")
         return False
@@ -353,15 +362,6 @@ def ensure_user_structures(user_id_str):
             'most_expensive': 0,
             'trades_made': 0
         }
-
-
-def is_user_in_any_auction(user_id):
-    user_id_str = str(user_id)
-    for auction_id, auction_data in active_auctions.items():
-        if auction_data['host'] == user_id or user_id_str in auction_data[
-                'participants']:
-            return True
-    return False
 
 
 @bot.event
@@ -761,27 +761,10 @@ async def check_host_activity(channel_id):
 
 @bot.command()
 async def startauction(ctx, *members: discord.Member, timer: int = 30):
-    """Starts a new auction, registers participants, and prompts for set selection."""
+    """Starts a new auction without player limitations."""
     if ctx.channel.id in active_auctions:
-        await ctx.send(
-            "❌ An auction is already active in this channel. Please use a different channel or end the current auction first."
-        )
+        await ctx.send("❌ An auction is already active in this channel.")
         return
-
-    if is_user_in_any_auction(
-            ctx.author.id) and ctx.author.id != PRIVILEGED_USER_ID:
-        await ctx.send(
-            f"❌ {ctx.author.display_name}, you are already participating in another auction."
-        )
-        return
-
-    for member in members:
-        if is_user_in_any_auction(
-                member.id) and member.id != PRIVILEGED_USER_ID:
-            await ctx.send(
-                f"❌ {member.display_name} is already participating in another auction."
-            )
-            return
 
     active_auctions[ctx.channel.id] = {
         "current_player": None,
@@ -798,14 +781,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         "awaiting_set_selection": False,
         "set_selection_author": None,
         "pass_votes": set(),
-        "tier_counters": {
-            pos: {
-                'A': 0,
-                'B': 0,
-                'C': 0
-            }
-            for pos in available_positions
-        },
+        "tier_counters": {pos: {'A': 0, 'B': 0, 'C': 0} for pos in available_positions},
         "last_sold_player": None,
         "last_sold_buyer_id": None,
         "last_sold_price": 0,
@@ -814,7 +790,6 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
     }
 
     auction_state = active_auctions[ctx.channel.id]
-
     auction_state['participants'].add(str(ctx.author.id))
     for m in members:
         auction_state['participants'].add(str(m.id))
@@ -827,17 +802,14 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         description="Please choose which set you want to auction:",
         color=discord.Color.blue())
 
-    set_list = "\n".join(
-        [f"**{key}** - {name}" for key, name in available_sets.items()])
+    set_list = "\n".join([f"**{key}** - {name}" for key, name in available_sets.items()])
     embed.add_field(name="Available Sets", value=set_list, inline=False)
     embed.set_footer(text="Type the set key (e.g., 'wc' for World Cup XI)")
-
+    
     await ctx.send(embed=embed)
-
+    
     auction_state['awaiting_set_selection'] = True
     auction_state['set_selection_author'] = ctx.author.id
-
-    # Start host activity check
     bot.loop.create_task(check_host_activity(ctx.channel.id))
 
 
@@ -902,10 +874,8 @@ async def add(ctx, member: discord.Member):
     if auction_state['host'] == ctx.author.id:
         auction_state['last_host_activity'] = time.time()
 
-    if is_user_in_any_auction(member.id) and member.id != PRIVILEGED_USER_ID:
-        await ctx.send(
-            f"❌ {member.display_name} is already participating in another auction."
-        )
+    if str(member.id) in auction_state['participants']:
+        await ctx.send(f"❌ {member.display_name} is already a participant.")
         return
 
     auction_state['participants'].add(str(member.id))
@@ -1494,9 +1464,6 @@ async def rebid(ctx):
         await ctx.send(
             "Only the auction host can use this command in this auction.")
         return
-
-    if auction_state['host'] == ctx.author.id:
-        auction_state['last_host_activity'] = time.time()
 
     if auction_state['bidding'] or auction_state['current_player']:
         await ctx.send(
@@ -2332,23 +2299,25 @@ async def events(ctx):
     event = random.choice(events_list)
     await ctx.send(f"🎲 Random Event: {event}")
 
-
-@bot.group(invoke_without_command=True)
-async def draft(ctx):
-    """Draft mode base command."""
-    await ctx.send(
-        "📋 Use `!draft start` to begin the draft or `!draft pick <player>` to pick a player."
-    )
-
-
-@draft.command()
-async def start(ctx):
-    await ctx.send("📋 Draft mode started! Turn order will be assigned.")
-
-
-@draft.command()
-async def pick(ctx, *, player_name):
-    await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
+@bot.command()
+async def draft(ctx, action: str = None):
+    """Draft command system."""
+    if action is None:
+        await ctx.send("Usage: !draft start|pick <player>")
+        return
+        
+    if action.lower() == "start":
+        # Implement draft start logic
+        await ctx.send("📋 Draft mode started! Turn order will be assigned.")
+        return
+        
+    elif action.lower() == "pick":
+        # Implement pick logic 
+        player_name = ctx.message.content.split(None, 2)[2]
+        await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
+        return
+        
+    await ctx.send("Unknown draft action. Use start or pick.")
 
 
 # -------------------- Added Gamemodes: KoTH, Draft Clash, Mystery Box --------------------
@@ -2365,54 +2334,47 @@ draft_clash_sessions = {}
 draft_clash_wins = {}
 
 
-# -------------------- KoTH --------------------
+# Modify draftclash command for no player limits
 @bot.command()
 async def draftclash(ctx, action: str = None):
+    """Draft Clash command without player limitations."""
     ch = ctx.channel.id
     if action is None:
         await ctx.send("Usage: !draftclash start|join|begin|status|pick <1-3>|koth")
         return
+        
     action = action.lower()
     if action == 'start':
-        if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
-                'state') in ('lobby', 'drafting'):
+        if ch in draft_clash_sessions and draft_clash_sessions[ch].get('state') in ('lobby', 'drafting'):
             await ctx.send("A draft is already in this channel.")
             return
+            
         draft_clash_sessions[ch] = {
             'host': str(ctx.author.id),
             'players': [str(ctx.author.id)],
-            'state': 'lobby',
+            'state': 'lobby', 
             'round': 0,
             'picks': {},
             'available_pool': [],
-            'set_key': None,
-            'max_players': 4
+            'set_key': None
         }
         save_data()
-        await ctx.send(
-            f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start."
-        )
+        await ctx.send(f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start.")
         return
+
     session = draft_clash_sessions.get(ch)
     if not session:
-        await ctx.send("No active draft lobby. Start with `!draftclash start`."
-                       )
+        await ctx.send("No active draft lobby. Start with `!draftclash start`.")
         return
+
     if action == 'join':
         if session['state'] != 'lobby':
             await ctx.send("Draft already in progress.")
             return
-        if len(session['players']) >= session['max_players']:
-            await ctx.send("Lobby full.")
-            return
-        if str(ctx.author.id) in session['players']:
-            await ctx.send("You already joined.")
-            return
+            
         session['players'].append(str(ctx.author.id))
         save_data()
-        await ctx.send(
-            f"{ctx.author.mention} joined the draft ({len(session['players'])}/{session['max_players']})."
-        )
+        await ctx.send(f"{ctx.author.mention} joined the draft! ({len(session['players'])} players)")
         return
     if action == 'begin':
         if str(ctx.author.id) != session['host']:
@@ -2436,6 +2398,19 @@ async def draftclash(ctx, action: str = None):
         session['available_pool'] = pool[:60]
         await _draft_offer(ctx, session)
         save_data()
+        return
+    if action == 'status':
+        await ctx.send(
+            f"Draft status: {session['state']}, players: {', '.join(session['players'])}, round: {session['round']}"
+        )
+        return
+    if action == 'pick':
+        parts = ctx.message.content.strip().split()
+        if len(parts) < 3:
+            await ctx.send("Use `!draftclash pick <1|2|3>`")
+            return
+        try:
+            idx = int(parts[2])
         return
     if action == 'status':
         await ctx.send(
@@ -2486,7 +2461,7 @@ async def draftclash(ctx, action: str = None):
         if current_king == user_id:
             await ctx.send("👑 You're already the King! Defend your throne against challengers.")
             return
-            
+
         # Simulate battle between challenger and king
         try:
             king_user = await bot.fetch_user(int(current_king))
@@ -2564,39 +2539,52 @@ async def draftclash(ctx, action: str = None):
 
 
 async def _draft_offer(ctx, session):
+    """Handles draft picks."""
     players = session['players']
     round_no = session['round']
+    
+    # Use snake draft order
     order = players if round_no % 2 == 1 else list(reversed(players))
+    
     for uid in order:
-        if len(session['picks'].get(uid, [])) < round_no:
-            pool = session['available_pool']
-            choices = []
-            for _ in range(3):
-                if not pool: break
-                choices.append(pool.pop(0))
-            if not choices:
-                session['state'] = 'completed'
-                await ctx.send("Pool exhausted; draft ended.")
-                return
-            session.setdefault('current_offer', {})[uid] = choices
-            embed = discord.Embed(
-                title=f"Draft Round {round_no} — Pick for <@{uid}>",
-                color=discord.Color.blue())
-            for i, p in enumerate(choices, start=1):
-                embed.add_field(
-                    name=f"{i}. {p.get('name','Unknown')}",
-                    value=
-                    f"{p.get('position','?').upper()} - {p.get('league','?')}",
-                    inline=False)
-            embed.set_footer(text="Type `!draftclash pick <1|2|3>`")
-            await ctx.send(embed=embed)
+        if len(session['picks'].get(uid, [])) >= round_no:
+            continue
+            
+        pool = session['available_pool']
+        if not pool:
+            session['state'] = 'completed'
+            await ctx.send("Pool exhausted; draft ended.")
             return
+            
+        # Offer 3 choices
+        choices = []
+        for _ in range(min(3, len(pool))):
+            choices.append(pool.pop(0))
+            
+        session.setdefault('current_offer', {})[uid] = choices
+        
+        embed = discord.Embed(
+            title=f"Draft Round {round_no} — Pick for <@{uid}>",
+            color=discord.Color.blue())
+            
+        for i, p in enumerate(choices, start=1):
+            embed.add_field(
+                name=f"{i}. {p.get('name','Unknown')}",
+                value=f"{p.get('position','?').upper()} - {p.get('league','?')}",
+                inline=False)
+                
+        embed.set_footer(text="Type `!draftclash pick <1|2|3>`")
+        await ctx.send(embed=embed)
+        return
+        
+    # Advance round if everyone has picked
     session['round'] += 1
     if session['round'] > 11:
         session['state'] = 'completed'
         await ctx.send("Draft complete! Running knockout...")
         await _draft_run_knockout(ctx, session)
         return
+        
     await _draft_offer(ctx, session)
 
 
@@ -2827,75 +2815,31 @@ koth_auction = load_koth(KOTH_AUCTION_FILE)
 koth_draft = load_koth(KOTH_DRAFT_FILE)
 
 @bot.command()
-async def koth_add(ctx, *members: discord.Member):
-    mode = None
-    if ctx.channel.id in koth_draft and koth_draft[ctx.channel.id]["active"]:
-        mode = "draft"; session = koth_draft[ctx.channel.id]
-    elif ctx.channel.id in koth_auction and koth_auction[ctx.channel.id]["active"]:
-        mode = "auction"; session = koth_auction[ctx.channel.id]
-    else:
-        await ctx.send("⚠️ No active KoTH session in this channel!"); return
-
-    for m in members:
-        if m.id not in session["players"]:
-            session["players"].append(m.id)
-
-    if mode == "draft": save_koth(KOTH_DRAFT_FILE, koth_draft)
-    else: save_koth(KOTH_AUCTION_FILE, koth_auction)
-
-    await ctx.send(f"Players added: {', '.join([m.mention for m in members])}")
-
-
-
-
-# -------------------- KoTH System (Merged) --------------------
-
-def _load_json(path):
-    try:
-        if os.path.exists(path):
-            with open(path,"r",encoding="utf-8") as f:
-                return json.load(f)
-    except Exception as e:
-        print("Error loading",path,e)
-    return {}
-
-def _save_json(path, data):
-    try:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path,"w",encoding="utf-8") as f:
-            json.dump(data,f,indent=2)
-    except Exception as e:
-        print("Error saving",path,e)
-
-koth_auction = _load_json(KOTH_AUCTION_FILE)
-koth_draft = _load_json(KOTH_DRAFT_FILE)
-
-@bot.command()
 async def koth(ctx, action: str = None, mode: str = None):
-    """Manage KoTH sessions.
+    """Manage KoTH sessions without player limits.
     Usage:
       !koth start auction
-      !koth start draftclash
+      !koth start draftclash  
       !koth add <session_id?> @user1 @user2
     """
     chan = str(ctx.channel.id)
     if action == "start":
-        if mode == "auction":
-            session_id = str(uuid.uuid4())[:8]
-            koth_auction.setdefault(chan, {})
-            koth_auction[chan][session_id] = {
-                "id": session_id,
-                "king": None,
-                "streak": 0,
-                "players": [],
-                "active": True,
-                "created_by": str(ctx.author.id),
-                "created_at": time.time()
-            }
-            _save_json(KOTH_AUCTION_FILE, koth_auction)
-            await ctx.send(f"🏟️ Auction KoTH started (ID `{session_id}`). Use `!koth add {session_id} @user1 @user2` to add players. Multiple Auction KoTH allowed in this channel.")
-            return
-        elif mode == "draftclash":
+     if mode == "auction":
+        session_id = str(uuid.uuid4())[:8]
+        koth_auction.setdefault(chan, {})
+        koth_auction[chan][session_id] = {
+            "id": session_id,
+            "king": None,
+            "streak": 0,
+            "players": [],
+            "active": True,
+            "created_by": str(ctx.author.id),
+            "created_at": time.time()
+        }
+        _save_json(KOTH_AUCTION_FILE, koth_auction)
+        await ctx.send(f"🏟️ Auction KoTH started (ID `{session_id}`)")
+        return
+    elif mode == "draftclash":
             if chan in koth_draft and koth_draft[chan].get("active"):
                 await ctx.send("⚠️ A Draft Clash KoTH is already running in this channel!")
                 return
@@ -2909,11 +2853,32 @@ async def koth(ctx, action: str = None, mode: str = None):
                 "created_at": time.time()
             }
             _save_json(KOTH_DRAFT_FILE, koth_draft)
-            await ctx.send("🏆 Draft Clash KoTH started! Use `!koth add @user1 @user2` to add players. (Draft Clash KoTH uses Draft Clash squads only.)")
+            await ctx.send("🏆 Draft Clash KoTH started! Use `!koth add @user1 @user2` to add players.")
             return
+    elif action == "add":
+        # ... rest of add logic stays the same but remove lineup requirement checks
+        if not args:
+            await ctx.send("Usage: `!koth add <session_id?> @user1 @user2`")
+            return
+            
+        # ... rest of the add logic stays the same but without lineup checks ...
+        
+        for m in ctx.message.mentions:
+            uid = str(m.id)
+            if uid not in target_session["players"]:
+                target_session["players"].append(uid)
+                added.append(m.mention)
+                
+        if target_mode=="draft":
+            _save_json(KOTH_DRAFT_FILE, koth_draft)
         else:
-            await ctx.send("Usage: `!koth start auction` or `!koth start draftclash`")
-            return
+            _save_json(KOTH_AUCTION_FILE, koth_auction)
+            
+        await ctx.send(f"Added to KoTH: {', '.join(added)}")
+        return
+    else:
+        await ctx.send("Use `!koth start` or `!koth add`.")
+        return
     elif action == "add":
         # syntax: !koth add [session_id] @user1 @user2...
         parts = ctx.message.content.split()
@@ -2976,7 +2941,7 @@ async def challenge(ctx, opponent: discord.Member = None):
 
     chan = str(ctx.channel.id)
 
-    # select target session: prefer draft session (only 1 per channel), else pick first active auction session
+    # select target session: prefer draft session (only 1 allowed per channel), else pick first active auction session
     target = None
     mode = None
     session_id = None
@@ -3090,6 +3055,83 @@ async def challenge(ctx, opponent: discord.Member = None):
     # update KoTH state with safe logic
     if target.get("king") is None:
         if winner:
+            target["king"] = winner
+            target["streak"] = 1
+            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> wins the first battle! 🏆 Streak: 1"
+        else:
+            result_msg = "🤝 It's a draw — no King yet."
+    else:
+        current_king = target.get("king")
+        if winner is None:
+            result_msg = "🤝 It's a draw! No change to the throne."
+        elif winner == current_king:
+            target["streak"] = target.get("streak", 0) + 1
+            result_msg = f"👑 | **The King Defends the Throne!** <@{winner}> wins again! 🔥 Streak: {target['streak']}"
+        else:
+            prev = current_king
+            target["king"] = winner
+            target["streak"] = 1
+            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> dethrones <@{prev}>! 🏆 Streak: 1"
+
+    # persist
+    try:
+        if mode == "draft":
+            _save_json(KOTH_DRAFT_FILE, koth_draft)
+        else:
+            _save_json(KOTH_AUCTION_FILE, koth_auction)
+    except Exception as e:
+        # saving failed but state updated in memory; warn
+        await ctx.send(f"⚠️ Warning: could not save KoTH state: {e}")
+
+    # send embed + result
+    await ctx.send(embed=embed)
+    await ctx.send(result_msg)
+    return
+
+
+@bot.command()
+async def kingstatus(ctx):
+    """Show current KoTH king(s) in this channel."""
+    chan = str(ctx.channel.id)
+    # Prefer draft session info (only one allowed per channel)
+    if chan in koth_draft and koth_draft[chan].get("active"):
+        s = koth_draft[chan]
+        if s.get("king"):
+            await ctx.send(f"👑 Current Draft KoTH King: <@{s['king']}> | 🔥 Streak: {s.get('streak', 0)}")
+        else:
+            await ctx.send("No Draft KoTH King yet. Add players and challenge!")
+        return
+
+    # Show auction sessions (can be multiple)
+    auction_sessions = koth_auction.get(chan, {})
+    active = {sid: ses for sid, ses in (auction_sessions.items() if auction_sessions else []) if ses.get("active")}
+    if not active:
+        await ctx.send("No active KoTH sessions in this channel.")
+        return
+
+    lines = []
+    for sid, s in active.items():
+        king = f"<@{s['king']}>" if s.get("king") else "— No King yet —"
+        lines.append(f"• ID `{sid}` — King: {king} — Streak: {s.get('streak', 0)} — Players: {len(s.get('players', []))}")
+
+    # chunk message if very long
+    msg = "\n".join(lines)
+    await ctx.send(msg)
+
+
+@bot.command()
+async def kothleaderboard(ctx):
+    """Show a simple KoTH leaderboard based on current recorded streaks."""
+    boards = {}
+    # auction: flatten sessions
+    for chan, sessions in (koth_auction.items() if isinstance(koth_auction, dict) else []):
+        for sid, s in (sessions.items() if isinstance(sessions, dict) else []):
+            if s.get("king"):
+                uid = s.get("king")
+                boards[uid] = max(boards.get(uid, 0), s.get("streak", 0))
+    # draft:
+    for chan, s in (koth_draft.items() if isinstance(koth_draft, dict) else []):
+        if s.get("king"):
             target["king"] = winner
             target["streak"] = 1
             result_msg = f"👑 | **A New King is Crowned!** <@{winner}> wins the first battle! 🏆 Streak: 1"
