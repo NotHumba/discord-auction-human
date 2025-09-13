@@ -2329,28 +2329,43 @@ async def draftclash(ctx, action: str = None):
         action = action.lower()
         if action == 'start':
             if ch in draft_clash_sessions and draft_clash_sessions[ch].get('state') in ('lobby', 'drafting'):
-                await ctx.send("A draft is already in this channel.")
+                await ctx.send("❌ A draft is already in progress in this channel!")
                 return
-                
-            # Ask for formation first
+        
+    # Ask for formation first
             embed = discord.Embed(title="🎮 Choose Formation", 
-                                description="Please type the formation you want to use:",
-                                color=discord.Color.blue())
+                        description="Please type the formation you want to use:",
+                        color=discord.Color.blue())
             formations_list = "\n".join([f"`{f}`" for f in available_formations.keys()])
             embed.add_field(name="Available Formations", value=formations_list)
             await ctx.send(embed=embed)
-            
+    
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
-                
+        
             try:
                 msg = await bot.wait_for('message', check=check, timeout=30.0)
                 formation = msg.content.strip()
+        
                 if formation not in available_formations:
-                    await ctx.send("❌ Invalid formation! Draft cancelled.")
-                    return
-                    
+                    await ctx.send("❌ Invalid formation! Starting with default 4-4-2")
+                    formation = '4-4-2'
+            
+                # Create draft session
                 draft_clash_sessions[ch] = {
+                    'host': str(ctx.author.id),
+                    'state': 'lobby',
+                    'players': [str(ctx.author.id)],
+                    'formation': formation
+        }
+        
+        await ctx.send(f"✅ Draft lobby created with {formation} formation! Others use `!draftclash join`, host uses `!draftclash begin <set_key>` to start.")
+            
+    except asyncio.TimeoutError:
+                await ctx.send("❌ Formation selection timed out. Please try again!")
+    return
+                    
+                 draft_clash_sessions[ch] = {
                     'host': str(ctx.author.id),
                     'players': [str(ctx.author.id)],
                     'state': 'lobby',
@@ -2447,7 +2462,8 @@ async def _draft_offer(ctx, session):
         pool = [p for p in session['available_pool'] if p['position'].lower() == current_pos]
         if not pool:
             session['state'] = 'completed'
-            await ctx.send("Pool exhausted; draft ended.")
+            await ctx.send("Draft complete! Running knockout tournament...")
+            await _draft_run_knockout(ctx, session)
             return
             
         # Offer 3 choices
@@ -2495,7 +2511,7 @@ async def _draft_offer(ctx, session):
         
     await _draft_offer(ctx, session)
 
-@bot.event
+@bot.event 
 async def on_reaction_add(reaction, user):
     """Handle draft pick reactions."""
     if user.bot:
@@ -2516,9 +2532,7 @@ async def on_reaction_add(reaction, user):
         if 'current_offer' in session and uid in session['current_offer']:
             choices = session['current_offer'].get(uid, [])
             if idx < len(choices):
-                # Process the pick
                 await _draft_pick(reaction.message.channel, session, idx)
-                return
 
 
 async def _draft_pick(ctx, session, idx):
