@@ -2332,7 +2332,7 @@ async def draftclash(ctx, action: str = None):
                 await ctx.send("❌ A draft is already in progress in this channel!")
                 return
         
-    # Ask for formation first
+            # Ask for formation first
             embed = discord.Embed(title="🎮 Choose Formation", 
                         description="Please type the formation you want to use:",
                         color=discord.Color.blue())
@@ -2354,19 +2354,6 @@ async def draftclash(ctx, action: str = None):
                 # Create draft session
                 draft_clash_sessions[ch] = {
                     'host': str(ctx.author.id),
-                    'state': 'lobby',
-                    'players': [str(ctx.author.id)],
-                    'formation': formation
-        }
-        
-        await ctx.send(f"✅ Draft lobby created with {formation} formation! Others use `!draftclash join`, host uses `!draftclash begin <set_key>` to start.")
-            
-    except asyncio.TimeoutError:
-                await ctx.send("❌ Formation selection timed out. Please try again!")
-    return
-                    
-                 draft_clash_sessions[ch] = {
-                    'host': str(ctx.author.id),
                     'players': [str(ctx.author.id)],
                     'state': 'lobby',
                     'round': 0,
@@ -2377,7 +2364,7 @@ async def draftclash(ctx, action: str = None):
                     'current_position': None
                 }
                 save_data()
-                await ctx.send(f"Draft Clash lobby created by {ctx.author.mention} with formation {formation}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start.")
+                await ctx.send(f"✅ Draft lobby created with {formation} formation! Others use `!draftclash join`, host uses `!draftclash begin <set_key>` to start.")
                 
             except asyncio.TimeoutError:
                 await ctx.send("⏰ Formation selection timed out!")
@@ -2440,12 +2427,10 @@ async def draftclash(ctx, action: str = None):
             await _draft_offer(ctx, session)
             save_data()
             return
-            
-        # ... rest of the command handlers remain the same ...
 
     except Exception as e:
         await ctx.send(f"❌ Error in draftclash command: {str(e)}")
-
+        
 async def _draft_offer(ctx, session):
     """Handles draft picks with emojis and formation-based picks."""
     players = session['players']
