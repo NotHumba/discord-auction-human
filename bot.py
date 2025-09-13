@@ -15,6 +15,7 @@ _r = random
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # Add this for member-related commands
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 BID_INCREMENT = 5000000
@@ -2430,7 +2431,7 @@ async def draftclash(ctx, action: str = None):
 
     except Exception as e:
         await ctx.send(f"❌ Error in draftclash command: {str(e)}")
-        
+
 async def _draft_offer(ctx, session):
     """Handles draft picks with emojis and formation-based picks."""
     players = session['players']
@@ -3129,4 +3130,8 @@ keep_alive()
 
 # Start the bot
 if __name__ == "__main__":
-    bot.run(os.getenv("DISCORD_BOT_TOKEN"))
+    token = os.getenv("DISCORD_BOT_TOKEN")
+    if not token:
+        print("Error: No bot token found in environment variables!")
+    else:
+        bot.run(token)
