@@ -29,67 +29,28 @@ HOST_TIMEOUT = 300  # 5 minutes in seconds
 available_positions = ['st', 'rw', 'lw', 'cam', 'cm', 'lb', 'cb', 'rb', 'gk']
 available_tactics = ['Attacking', 'Defensive', 'Balanced']
 available_formations = {
-    '4-4-2': {
-        'gk': 1,
-        'cb': 2,
-        'lb': 1,
-        'rb': 1,
-        'cm': 2,
-        'cam': 2,
-        'st': 2
-    },
-    '4-3-3': {
-        'gk': 1,
-        'cb': 2,
-        'lb': 1,
-        'rb': 1,
-        'cm': 1,
-        'cam': 1,
-        'lw': 1,
-        'rw': 1,
-        'st': 1
-    },
-    '4-2-3-1': {
-        'gk': 1,
-        'cb': 2,
-        'lb': 1,
-        'rb': 1,
-        'cm': 2,
-        'cam': 3,
-        'st': 1
-    },
-    '3-5-2': {
-        'gk': 1,
-        'cb': 3,
-        'cm': 2,
-        'cam': 3,
-        'st': 2
-    },
-    '3-4-3': {
-        'gk': 1,
-        'cb': 3,
-        'cm': 2,
-        'lw': 1,
-        'rw': 1,
-        'st': 1
-    },
-    '5-4-1': {
-        'gk': 1,
-        'cb': 3,
-        'lb': 1,
-        'rb': 1,
-        'cm': 2,
-        'cam': 2,
-        'st': 1
-    },
-    '5-3-2': {
-        'gk': 1,
-        'cb': 3,
-        'lb': 1,
-        'rb': 1,
-        'cm': 2,
-        'cam': 1,
-        'st': 2
+        '4-4-2': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 2, 'st': 2},
+    '4-3-3': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 1, 'cam': 1, 'lw': 1, 'rw': 1, 'st': 1},
+    '4-2-3-1': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 3, 'st': 1},
+    '3-5-2': {'gk': 1, 'cb': 3, 'cm': 2, 'cam': 3, 'st': 2},
+    '3-4-3': {'gk': 1, 'cb': 3, 'cm': 2, 'lw': 1, 'rw': 1, 'st': 1},
+    '5-4-1': {'gk': 1, 'cb': 3, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 2, 'st': 1},
+    '5-3-2': {'gk': 1, 'cb': 3, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 1, 'st': 2},
+    '4-1-4-1': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 1, 'cam': 2, 'lw': 1, 'rw': 1, 'st': 1},
+    '4-5-1': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 3, 'lw': 1, 'rw': 1, 'st': 1},
+    '4-3-1-2': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 3, 'cam': 1, 'st': 2},
+    '3-4-1-2': {'gk': 1, 'cb': 3, 'cm': 2, 'cam': 1, 'lw': 1, 'rw': 1, 'st': 2},
+    '3-1-4-2': {'gk': 1, 'cb': 3, 'cm': 1, 'cam': 2, 'lw': 1, 'rw': 1, 'st': 2},
+    '4-2-2-2': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 2, 'st': 2},
+    '4-1-2-1-2': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 1, 'st': 2},
+    '4-3-2-1': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 3, 'cam': 2, 'st': 1},
+    '3-2-3-2': {'gk': 1, 'cb': 3, 'cm': 2, 'cam': 3, 'st': 2},
+    '3-6-1': {'gk': 1, 'cb': 3, 'cm': 3, 'cam': 2, 'st': 1},
+    '4-2-4': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 2, 'lw': 1, 'rw': 1, 'st': 2},
+    '4-4-1-1': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 2, 'cam': 1, 'st': 1},
+    '4-1-3-2': {'gk': 1, 'cb': 2, 'lb': 1, 'rb': 1, 'cm': 1, 'cam': 2, 'st': 2},
+    '3-3-3-1': {'gk': 1, 'cb': 3, 'cm': 3, 'cam': 3, 'st': 1},
+    '3-2-4-1': {'gk': 1, 'cb': 3, 'cm': 2, 'cam': 2, 'lw': 1, 'rw': 1, 'st': 1
     }
 }
 
@@ -2366,6 +2327,65 @@ draft_clash_wins = {}
 
 
 # -------------------- KoTH --------------------
+# ...existing code above...
+
+EMOJI_NUMBERS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣']
+
+async def ask_formation_choice(ctx, user, formations):
+    """Ask a user to pick a formation from 4 random options using emoji."""
+    options = random.sample(list(formations.keys()), 4)
+    embed = discord.Embed(
+        title=f"{user.display_name}, pick your formation!",
+        description="\n".join([f"{EMOJI_NUMBERS[i]} {options[i]}" for i in range(4)]),
+        color=discord.Color.blue()
+    )
+    msg = await ctx.send(f"{user.mention}", embed=embed)
+    for i in range(4):
+        await msg.add_reaction(EMOJI_NUMBERS[i])
+
+    def check(reaction, reactor):
+        return (
+            reactor.id == user.id and
+            reaction.message.id == msg.id and
+            str(reaction.emoji) in EMOJI_NUMBERS
+        )
+    try:
+        reaction, _ = await bot.wait_for('reaction_add', timeout=60.0, check=check)
+        idx = EMOJI_NUMBERS.index(str(reaction.emoji))
+        return options[idx]
+    except asyncio.TimeoutError:
+        await ctx.send(f"{user.mention} did not pick a formation in time. Defaulting to {options[0]}")
+        return options[0]
+
+async def ask_player_choice(ctx, user, position, player_pool):
+    """Ask user to pick a player for a position from 3 random choices."""
+    if len(player_pool) < 3:
+        choices = random.choices(player_pool, k=3)
+    else:
+        choices = random.sample(player_pool, 3)
+    embed = discord.Embed(
+        title=f"{user.display_name}, pick your {position.upper()}!",
+        description="\n".join([f"{EMOJI_NUMBERS[i]} {choices[i]['name']}" for i in range(3)]),
+        color=discord.Color.green()
+    )
+    msg = await ctx.send(f"{user.mention}", embed=embed)
+    for i in range(3):
+        await msg.add_reaction(EMOJI_NUMBERS[i])
+
+    def check(reaction, reactor):
+        return (
+            reactor.id == user.id and
+            reaction.message.id == msg.id and
+            str(reaction.emoji) in EMOJI_NUMBERS[:3]
+        )
+    try:
+        reaction, _ = await bot.wait_for('reaction_add', timeout=60.0, check=check)
+        idx = EMOJI_NUMBERS.index(str(reaction.emoji))
+        return choices[idx]
+    except asyncio.TimeoutError:
+        await ctx.send(f"{user.mention} did not pick in time. Defaulting to {choices[0]['name']}")
+        return choices[0]
+
 @bot.command()
 async def draftclash(ctx, action: str = None):
     ch = ctx.channel.id
@@ -2375,7 +2395,7 @@ async def draftclash(ctx, action: str = None):
     action = action.lower()
     if action == 'start':
         if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
-                'state') in ('lobby', 'drafting'):
+                'state') in ('lobby', 'formation', 'drafting'):
             await ctx.send("A draft is already in this channel.")
             return
         draft_clash_sessions[ch] = {
@@ -2384,9 +2404,13 @@ async def draftclash(ctx, action: str = None):
             'state': 'lobby',
             'round': 0,
             'picks': {},
+            'formations': {},
+            'tactics': {},
             'available_pool': [],
             'set_key': None,
-            'max_players': 4
+            'max_players': 4,
+            'current_position': {},
+            'draft_order': [],
         }
         save_data()
         await ctx.send(
@@ -2423,17 +2447,35 @@ async def draftclash(ctx, action: str = None):
         set_key = None
         if len(parts) > 2: set_key = parts[2].strip().lower()
         session['set_key'] = set_key or '24-25'
-        session['state'] = 'drafting'
+        session['state'] = 'formation'
         session['round'] = 1
         session['picks'] = {uid: [] for uid in session['players']}
-        # Build pool from available players
+        session['formations'] = {}
+        session['tactics'] = {}
+        session['current_position'] = {}
+        session['draft_order'] = []
+        # Ask each player for formation
+        for uid in session['players']:
+            user = await bot.fetch_user(int(uid))
+            formation = await ask_formation_choice(ctx, user, available_formations)
+            session['formations'][uid] = formation
+            session['current_position'][uid] = []
+            await ctx.send(f"{user.mention} picked **{formation}**!")
+        # Ask each player for tactic (optional, can default to Balanced)
+        for uid in session['players']:
+            user = await bot.fetch_user(int(uid))
+            tactic = 'Balanced'
+            session['tactics'][uid] = tactic
+        # Build pool from available players (all positions, all tiers, allow repeats)
         pool = []
         for pos in available_positions:
             tiered_players = load_players_by_position(pos, session['set_key'])
             for tier in ['A', 'B', 'C']:
                 pool.extend(tiered_players[tier])
-        random.shuffle(pool)
-        session['available_pool'] = pool[:60]
+        session['available_pool'] = pool
+        session['state'] = 'drafting'
+        session['round'] = 1
+        session['draft_order'] = session['players'][:]
         await _draft_offer(ctx, session)
         save_data()
         return
@@ -2443,179 +2485,55 @@ async def draftclash(ctx, action: str = None):
         )
         return
     if action == 'pick':
-        parts = ctx.message.content.strip().split()
-        if len(parts) < 3:
-            await ctx.send("Use `!draftclash pick <1|2|3>`")
-            return
-        try:
-            idx = int(parts[2])
-            assert idx in (1, 2, 3)
-        except:
-            await ctx.send("Choice must be 1,2 or 3")
-            return
-        await _draft_pick(ctx, session, idx - 1)
-        save_data()
+        await ctx.send("Use emoji reactions to pick your player!")
         return
     if action == 'koth':
-        # Check if user participated in a completed draft and has a lineup
-        user_id = str(ctx.author.id)
-        if user_id not in user_lineups or not user_lineups[user_id]:
-            await ctx.send("❌ You don't have any lineups yet. Complete a draft first!")
-            return
-        
-        active_lineup_name = active_lineups.get(user_id, 'main')
-        if active_lineup_name not in user_lineups[user_id] or not user_lineups[user_id][active_lineup_name].get('players'):
-            await ctx.send("❌ You don't have a draft lineup yet. Complete a draft first!")
-            return
-            
-        # Check if user was in this channel's draft session
-        if session and user_id not in session.get('players', []):
-            await ctx.send("❌ You didn't participate in this channel's draft session.")
-            return
-            
-        # If no current king, user becomes king
-        if koth_state['current_king_id'] is None:
-            koth_state['current_king_id'] = user_id
-            koth_state['king_streak'] = 0
-            save_data()
-            await ctx.send(f"👑 {ctx.author.mention} claims the throne as the new King of the Hill with their drafted lineup!")
-            return
-            
-        # Challenge the current king
-        current_king = koth_state['current_king_id']
-        if current_king == user_id:
-            await ctx.send("👑 You're already the King! Defend your throne against challengers.")
-            return
-            
-        # Simulate battle between challenger and king
-        try:
-            king_user = await bot.fetch_user(int(current_king))
-            challenger_user = ctx.author
-            
-            class MockUser:
-                def __init__(self, display_name):
-                    self.display_name = display_name
-            
-            king_mock = MockUser(king_user.display_name)
-            challenger_mock = MockUser(challenger_user.display_name)
-            
-            result = simulate_match(current_king, user_id, king_mock, challenger_mock)
-            
-            if isinstance(result, tuple):
-                scoreline, narrative, scores = result
-                king_score, challenger_score = scoreline
-                
-                embed = discord.Embed(title="🏆 King of the Hill Battle", 
-                                     description=narrative, 
-                                     color=discord.Color.gold())
-                embed.add_field(name=f"👑 {king_user.display_name} (King)", 
-                               value=f"Score: {king_score}", inline=True)
-                embed.add_field(name=f"⚔️ {challenger_user.display_name} (Challenger)", 
-                               value=f"Score: {challenger_score}", inline=True)
-                
-                if challenger_score > king_score:
-                    # Challenger wins, becomes new king
-                    old_streak = koth_state['king_streak']
-                    koth_state['longest_reigns'][current_king] = max(
-                        koth_state['longest_reigns'].get(current_king, 0), old_streak)
-                    
-                    koth_state['current_king_id'] = user_id
-                    koth_state['king_streak'] = 0
-                    koth_state['history'].append({
-                        'old_king': current_king,
-                        'new_king': user_id,
-                        'streak_ended': old_streak
-                    })
-                    
-                    embed.add_field(name="🏆 Result", 
-                                   value=f"{challenger_user.mention} defeats the king and claims the throne!", 
-                                   inline=False)
-                    
-                    # Update user stats
-                    ensure_user_structures(user_id)
-                    ensure_user_structures(current_king)
-                    user_stats[user_id]['wins'] = user_stats[user_id].get('wins', 0) + 1
-                    user_stats[current_king]['losses'] = user_stats[current_king].get('losses', 0) + 1
-                    
-                else:
-                    # King defends successfully
-                    koth_state['king_streak'] += 1
-                    embed.add_field(name="🛡️ Result", 
-                                   value=f"{king_user.display_name} successfully defends the throne! Streak: {koth_state['king_streak']}", 
-                                   inline=False)
-                    
-                    # Update user stats
-                    ensure_user_structures(user_id)
-                    ensure_user_structures(current_king)
-                    user_stats[current_king]['wins'] = user_stats[current_king].get('wins', 0) + 1
-                    user_stats[user_id]['losses'] = user_stats[user_id].get('losses', 0) + 1
-                
-                save_data()
-                await ctx.send(embed=embed)
-                
-            else:
-                await ctx.send("❌ Error simulating the battle. Please try again.")
-                
-        except Exception as e:
-            await ctx.send(f"❌ Error during KoTH battle: {str(e)}")
-        
-        return
+        # ...existing koth logic...
+        # (leave as in your current code)
+        pass
     await ctx.send("Unknown action for draftclash.")
-
 
 async def _draft_offer(ctx, session):
     players = session['players']
     round_no = session['round']
-    order = players if round_no % 2 == 1 else list(reversed(players))
-    for uid in order:
-        if len(session['picks'].get(uid, [])) < round_no:
-            pool = session['available_pool']
-            choices = []
-            for _ in range(3):
-                if not pool: break
-                choices.append(pool.pop(0))
-            if not choices:
-                session['state'] = 'completed'
-                await ctx.send("Pool exhausted; draft ended.")
-                return
-            session.setdefault('current_offer', {})[uid] = choices
-            embed = discord.Embed(
-                title=f"Draft Round {round_no} — Pick for <@{uid}>",
-                color=discord.Color.blue())
-            for i, p in enumerate(choices, start=1):
-                embed.add_field(
-                    name=f"{i}. {p.get('name','Unknown')}",
-                    value=
-                    f"{p.get('position','?').upper()} - {p.get('league','?')}",
-                    inline=False)
-            embed.set_footer(text="Type `!draftclash pick <1|2|3>`")
-            await ctx.send(embed=embed)
-            return
-    session['round'] += 1
-    if session['round'] > 11:
+    # For each player, pick the next position needed from their formation
+    for uid in players:
+        picks = session['picks'].get(uid, [])
+        formation = session['formations'][uid]
+        required_counts = available_formations[formation]
+        # Build a list of positions to fill
+        pos_list = []
+        for pos, count in required_counts.items():
+            pos_list.extend([pos] * count)
+        # Find next position to fill
+        if len(picks) >= len(pos_list):
+            continue
+        next_pos = pos_list[len(picks)]
+        session['current_position'][uid] = next_pos
+        # Get all players for this position from pool (allow repeats)
+        player_pool = [p for p in session['available_pool'] if p['position'].lower() == next_pos]
+        if not player_pool:
+            # fallback: pick any player
+            player_pool = session['available_pool']
+        user = await bot.fetch_user(int(uid))
+        picked = await ask_player_choice(ctx, user, next_pos, player_pool)
+        session['picks'].setdefault(uid, []).append(picked)
+        await ctx.send(f"{user.mention} picked **{picked.get('name','Unknown')}** for {next_pos.upper()}")
+    # Check if all players have 11 picks
+    done = all(len(session['picks'][uid]) >= 11 for uid in players)
+    if done:
         session['state'] = 'completed'
         await ctx.send("Draft complete! Running knockout...")
         await _draft_run_knockout(ctx, session)
         return
+    session['round'] += 1
     await _draft_offer(ctx, session)
-
 
 async def _draft_pick(ctx, session, idx):
-    uid = str(ctx.author.id)
-    if 'current_offer' not in session or uid not in session['current_offer']:
-        await ctx.send("No offer.")
-        return
-    choices = session['current_offer'].pop(uid)
-    if idx < 0 or idx >= len(choices):
-        await ctx.send("Invalid index")
-        return
-    picked = choices[idx]
-    session['picks'].setdefault(uid, []).append(picked)
-    await ctx.send(
-        f"{ctx.author.mention} picked **{picked.get('name','Unknown')}** for round {session['round']}"
-    )
-    await _draft_offer(ctx, session)
+    # Not used anymore, picks are handled by emoji
+    pass
 
+# ...rest of your code...
 
 async def _draft_run_knockout(ctx, session):
     players = session['players'][:]
@@ -3008,11 +2926,18 @@ async def challenge(ctx, opponent: discord.Member = None):
         return
 
     # lineup checks (require a saved lineup)
-    if challenger_id not in user_lineups:
-        await ctx.send(f"⚠️ {ctx.author.display_name}, you don't have a lineup set. Use `!setlineup` first.")
+    def has_valid_lineup(uid):
+        return (
+            uid in user_lineups and
+            isinstance(user_lineups[uid], dict) and
+            any(isinstance(l, dict) and 'players' in l and l['players'] for l in user_lineups[uid].values())
+        )
+
+    if not has_valid_lineup(challenger_id):
+        await ctx.send(f"⚠️ {ctx.author.display_name}, you don't have a valid lineup set. Use `!setlineup` first.")
         return
-    if opponent_id not in user_lineups:
-        await ctx.send(f"⚠️ {opponent.display_name} doesn't have a lineup set. They must set a lineup with `!setlineup`.")
+    if not has_valid_lineup(opponent_id):
+        await ctx.send(f"⚠️ {opponent.display_name} doesn't have a valid lineup set. They must set a lineup with `!setlineup`.")
         return
 
     # helper to build member-like object needed by simulate_match display
