@@ -2408,7 +2408,6 @@ async def draftclash(ctx, action: str = None):
             'tactics': {},
             'available_pool': [],
             'set_key': None,
-            'max_players': 4,
             'current_position': {},
             'draft_order': [],
         }
@@ -2425,9 +2424,6 @@ async def draftclash(ctx, action: str = None):
     if action == 'join':
         if session['state'] != 'lobby':
             await ctx.send("Draft already in progress.")
-            return
-        if len(session['players']) >= session['max_players']:
-            await ctx.send("Lobby full.")
             return
         if str(ctx.author.id) in session['players']:
             await ctx.send("You already joined.")
