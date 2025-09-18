@@ -7,6 +7,7 @@
   {"name": "Cesc Fàbregas", "position": "CAM", "tier": "A", "base_price": 47500000},
   {"name": "Dennis Bergkamp", "position": "CAM", "tier": "A", "base_price": 47000000},
   {"name": "Mesut Özil", "position": "CAM", "tier": "A", "base_price": 46500000},
+  {"name": "David Silva", "position": "CAM", "tier": "A", "base_price": 46500000},
   {"name": "Robbie Fowler", "position": "CAM", "tier": "B", "base_price": 35000000},
   {"name": "Mikel Arteta", "position": "CAM", "tier": "B", "base_price": 34500000},
   {"name": "Niko Kranjčar", "position": "CAM", "tier": "B", "base_price": 34000000},
