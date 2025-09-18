@@ -8,6 +8,7 @@
   {"name": "Martin Keown", "position": "CB", "tier": "A", "base_price": 47000000},
   {"name": "Ashley Cole", "position": "CB", "tier": "A", "base_price": 46500000},
   {"name": "Thiago Silva", "position": "CB", "tier": "A", "base_price": 46500000},
+  {"name": "Vincent Kompany", "position": "CB", "tier": "A", "base_price": 42500000},
   {"name": "Ledley King", "position": "CB", "tier": "B", "base_price": 35000000},
   {"name": "Phil Jagielka", "position": "CB", "tier": "B", "base_price": 34500000},
   {"name": "Joleon Lescott", "position": "CB", "tier": "B", "base_price": 34000000},
