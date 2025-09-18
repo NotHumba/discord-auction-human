@@ -2386,7 +2386,13 @@ async def ask_player_choice(ctx, user, position, player_pool):
         await ctx.send(f"{user.mention} did not pick in time. Defaulting to {choices[0]['name']}")
         return choices[0]
 
-if action == 'start':
+@bot.command()
+async def draftclash(ctx, action: str = None):
+    ch = ctx.channel.id
+    if action is None:
+        await ctx.send("Usage: !draftclash start|join|begin|status|pick|koth")
+        return
+    action = action.lower()
     if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
             'state') in ('lobby', 'formation', 'drafting'):
         await ctx.send("A draft is already in this channel.")
