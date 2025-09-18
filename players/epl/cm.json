@@ -9,6 +9,7 @@
   {"name": "N'Golo Kanté", "position": "CM", "tier": "A", "base_price": 46500000},
   {"name": "Jermaine Jenas", "position": "CM", "tier": "B", "base_price": 35000000},
   {"name": "Rodri", "position": "CM", "tier": "B", "base_price": 35000000},
+  {"name": "Cesc Fabregas", "position": "CM", "tier": "B", "base_price": 35000000},
   {"name": "James Milner", "position": "CM", "tier": "B", "base_price": 34500000},
   {"name": "David Beckham", "position": "CM", "tier": "B", "base_price": 34000000},
   {"name": "Tom Huddlestone", "position": "CM", "tier": "B", "base_price": 33500000},
