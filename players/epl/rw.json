@@ -5,6 +5,7 @@
   {"name": "Clint Dempsey", "position": "RW", "tier": "A", "base_price": 48500000},
   {"name": "Niko Kranjčar", "position": "RW", "tier": "A", "base_price": 48000000},
   {"name": "Aaron Lennon", "position": "RW", "tier": "B", "base_price": 35000000},
+  {"name": "Foden", "position": "RW", "tier": "B", "base_price": 35000000},
   {"name": "Theo Walcott", "position": "RW", "tier": "B", "base_price": 34500000},
   {"name": "Andros Townsend", "position": "RW", "tier": "B", "base_price": 34000000},
   {"name": "Jermaine Jenas", "position": "RW", "tier": "B", "base_price": 33500000},
