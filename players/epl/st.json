@@ -6,6 +6,7 @@
   {"name": "Wayne Rooney", "position": "ST", "tier": "A", "base_price": 48000000},
   {"name": "Didier Drogba", "position": "ST", "tier": "A", "base_price": 47500000},
   {"name": "Jermain Defoe", "position": "ST", "tier": "A", "base_price": 47000000},
+  {"name": "Erling Haaland", "position": "ST", "tier": "A", "base_price": 40000000},
   {"name": "Peter Crouch", "position": "ST", "tier": "B", "base_price": 35000000},
   {"name": "Louis Saha", "position": "ST", "tier": "B", "base_price": 34500000},
   {"name": "Niko Kranjčar", "position": "ST", "tier": "B", "base_price": 34000000},
