@@ -2386,36 +2386,46 @@ async def ask_player_choice(ctx, user, position, player_pool):
         await ctx.send(f"{user.mention} did not pick in time. Defaulting to {choices[0]['name']}")
         return choices[0]
 
-@bot.command()
-async def draftclash(ctx, action: str = None):
-    ch = ctx.channel.id
-    if action is None:
-        await ctx.send("Usage: !draftclash start|join|begin|status|pick <1-3>|koth")
+if action == 'start':
+    if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
+            'state') in ('lobby', 'formation', 'drafting'):
+        await ctx.send("A draft is already in this channel.")
         return
-    action = action.lower()
-    if action == 'start':
-        if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
-                'state') in ('lobby', 'formation', 'drafting'):
-            await ctx.send("A draft is already in this channel.")
-            return
-        draft_clash_sessions[ch] = {
-            'host': str(ctx.author.id),
-            'players': [str(ctx.author.id)],
-            'state': 'lobby',
-            'round': 0,
-            'picks': {},
-            'formations': {},
-            'tactics': {},
-            'available_pool': [],
-            'set_key': None,
-            'current_position': {},
-            'draft_order': [],
-        }
-        save_data()
-        await ctx.send(
-            f"Draft Clash lobby created by {ctx.author.mention}. Others use `!draftclash join`. Host uses `!draftclash begin <set_key>` to start."
-        )
-        return
+    draft_clash_sessions[ch] = {
+        'host': str(ctx.author.id),
+        'players': [str(ctx.author.id)],
+        'state': 'lobby',
+        'round': 0,
+        'picks': {},
+        'formations': {},
+        'tactics': {},
+        'available_pool': [],
+        'set_key': None,
+        'current_position': {},
+        'draft_order': [],
+    }
+    save_data()
+    join_msg = await ctx.send(
+        f"Draft Clash lobby created by {ctx.author.mention}. React with ✅ to join! Host uses `!draftclash begin <set_key>` to start."
+    )
+    await join_msg.add_reaction("✅")
+
+    def check(reaction, user):
+        return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
+
+    async def wait_for_joins():
+        while draft_clash_sessions[ch]['state'] == 'lobby':
+            try:
+                reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
+                uid = str(user.id)
+                if uid not in draft_clash_sessions[ch]['players']:
+                    draft_clash_sessions[ch]['players'].append(uid)
+                    await ctx.send(f"{user.mention} joined the draft!")
+                    save_data()
+            except asyncio.TimeoutError:
+                break
+    bot.loop.create_task(wait_for_joins())
+    return
     session = draft_clash_sessions.get(ch)
     if not session:
         await ctx.send("No active draft lobby. Start with `!draftclash start`."
@@ -2423,17 +2433,17 @@ async def draftclash(ctx, action: str = None):
         return
     if action == 'join':
         if session['state'] != 'lobby':
-            await ctx.send("Draft already in progress.")
-            return
+           await ctx.send("Draft already in progress.")
+           return
         if str(ctx.author.id) in session['players']:
-            await ctx.send("You already joined.")
-            return
+           await ctx.send("You already joined.")
+           return
         session['players'].append(str(ctx.author.id))
         save_data()
         await ctx.send(
-            f"{ctx.author.mention} joined the draft ({len(session['players'])}/{session['max_players']})."
-        )
-        return
+           f"{ctx.author.mention} joined the draft ({len(session['players'])} players)."
+    )
+    return
     if action == 'begin':
         if str(ctx.author.id) != session['host']:
             await ctx.send("Only host can begin.")
@@ -2536,16 +2546,13 @@ async def _draft_run_knockout(ctx, session):
     for uid in players:
         picks = session['picks'].get(uid, [])
         lineup = picks[:11]
-        if len(lineup) < 11:
-            extra = user_teams.get(uid, [])[:11 - len(lineup)]
-            lineup.extend(extra)
         if uid not in user_lineups:
             user_lineups[uid] = {}
             active_lineups[uid] = 'draft'
         user_lineups[uid]['draft'] = {
             'players': lineup,
             'tactic': 'Balanced',
-            'formation': '4-4-2'
+            'formation': session['formations'].get(uid, '4-4-2')
         }
         active_lineups[uid] = 'draft'
     bracket = players[:]
@@ -3128,6 +3135,48 @@ async def koth_list(ctx, mode: str = None):
         return
     else:
         await ctx.send("Usage: `!koth_list auction` or `!koth_list draftclash`")
+
+@bot.command()
+async def koth_lineup(ctx):
+    """Set your KoTH lineup using your drafted team."""
+    user_id = str(ctx.author.id)
+    if user_id not in user_lineups or 'draft' not in user_lineups[user_id]:
+        await ctx.send("You don't have a drafted team yet. Join a Draft Clash and finish drafting first!")
+        return
+    # Start lineup setup using drafted players
+    lineup_setup_state['user_id'] = user_id
+    lineup_setup_state['channel_id'] = ctx.channel.id
+    lineup_setup_state['stage'] = 'formation'
+    lineup_setup_state['lineup_name'] = 'draft'
+    lineup_setup_state['selected_players'] = []
+    lineup_setup_state['position_counts'] = {pos: 0 for pos in available_positions}
+    lineup_setup_state['required_counts'] = None
+    lineup_setup_state['formation'] = None
+    lineup_setup_state['tactic'] = None
+
+    embed = discord.Embed(
+        title="🎯 Select Formation for KoTH",
+        description="Choose a formation for your KoTH lineup (using your drafted players):",
+        color=discord.Color.blue())
+    embed.add_field(name="Available Formations",
+                    value=", ".join(available_formations.keys()),
+                    inline=False)
+    embed.set_footer(text="Type the formation (e.g., '4-3-3'). 600s timeout.")
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def viewteam(ctx):
+    """View your current Draft Clash team."""
+    user_id = str(ctx.author.id)
+    if user_id not in user_lineups or 'draft' not in user_lineups[user_id]:
+        await ctx.send("You don't have a Draft Clash team yet.")
+        return
+    lineup = user_lineups[user_id]['draft']
+    embed = discord.Embed(title=f"⚡ {ctx.author.display_name}'s Draft Clash Team", color=discord.Color.green())
+    embed.add_field(name="Formation", value=lineup.get('formation', '4-4-2'), inline=True)
+    embed.add_field(name="Tactic", value=lineup.get('tactic', 'Balanced'), inline=True)
+    embed.add_field(name="Players", value="\n".join([f"{p['name']} ({p['position'].upper()})" for p in lineup['players']]), inline=False)
+    await ctx.send(embed=embed)
 
 
 keep_alive()
