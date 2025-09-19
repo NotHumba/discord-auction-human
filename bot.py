@@ -2386,12 +2386,23 @@ async def ask_player_choice(ctx, user, position, player_pool):
         await ctx.send(f"{user.mention} did not pick in time. Defaulting to {choices[0]['name']}")
         return choices[0]
 
+draft_sessions = {}
+
+class DraftState:
+    def __init__(self, host_id):
+        self.host_id = host_id
+        self.players = [host_id]
+        self.state = "lobby"  # lobby, drafting, finished
+        self.round = 0
+
 @bot.command()
-async def draftclash(ctx, action: str = None):
+async def draftclash(ctx, action: str = None, set_key: str = None):
     ch = ctx.channel.id
+    author = ctx.author.id
     if action is None:
-        await ctx.send("Usage: !draftclash start|join|begin|status|pick|koth")
+        await ctx.send("Usage: `!draftclash start|join|begin|status|end`")
         return
+
     action = action.lower()
     if ch in draft_clash_sessions and draft_clash_sessions[ch].get(
             'state') in ('lobby', 'formation', 'drafting'):
@@ -2437,19 +2448,25 @@ async def draftclash(ctx, action: str = None):
         await ctx.send("No active draft lobby. Start with `!draftclash start`."
                        )
         return
-    if action == 'join':
-        if session['state'] != 'lobby':
-           await ctx.send("Draft already in progress.")
-           return
-        if str(ctx.author.id) in session['players']:
-           await ctx.send("You already joined.")
-           return
-        session['players'].append(str(ctx.author.id))
-        save_data()
-        await ctx.send(
-           f"{ctx.author.mention} joined the draft ({len(session['players'])} players)."
-    )
-    return
+    if action == "start":
+        if ch in draft_sessions:
+            await ctx.send("A Draft Clash is already running in this channel.")
+            return
+        draft_sessions[ch] = DraftState(host_id=author)
+        msg = await ctx.send(f"Draft Clash lobby created by {ctx.author.mention}. React with ✅ to join! Host uses `!draftclash begin <set>` to start.")
+        await msg.add_reaction("✅")
+        return
+    
+    if action == "join":
+        if ch not in draft_sessions or draft_sessions[ch].state != "lobby":
+            await ctx.send("No lobby found. Ask host to use `!draftclash start`.")
+            return
+        if author in draft_sessions[ch].players:
+            await ctx.send("You have already joined!")
+            return
+        draft_sessions[ch].players.append(author)
+        await ctx.send(f"{ctx.author.mention} joined the draft! Total: {len(draft_sessions[ch].players)}")
+        retur
     if action == 'begin':
         if str(ctx.author.id) != session['host']:
             await ctx.send("Only host can begin.")
