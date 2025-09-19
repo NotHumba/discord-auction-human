@@ -2449,13 +2449,16 @@ async def draftclash(ctx, action: str = None, set_key: str = None):
                        )
         return
     if action == "start":
-        if ch in draft_sessions:
-            await ctx.send("A Draft Clash is already running in this channel.")
-            return
-        draft_sessions[ch] = DraftState(host_id=author)
-        msg = await ctx.send(f"Draft Clash lobby created by {ctx.author.mention}. React with ✅ to join! Host uses `!draftclash begin <set>` to start.")
-        await msg.add_reaction("✅")
+    # Only fail if lobby/drafting already running
+    if ch in draftclashsessions and draftclashsessions[ch]['state'] in ["lobby", "drafting"]:
+        await ctx.send(f"A draft lobby is already open. Host: <@{draftclashsessions[ch]['host']}>. Join with `!draftclash join`.")
         return
+    # Create new lobby as before
+    draftclashsessions[ch] = {
+        "host": str(ctx.author.id),
+        # ... rest of code ...
+        "state": "lobby",
+    }
     
     if action == "join":
         if ch not in draft_sessions or draft_sessions[ch].state != "lobby":
@@ -2467,13 +2470,17 @@ async def draftclash(ctx, action: str = None, set_key: str = None):
         draft_sessions[ch].players.append(author)
         await ctx.send(f"{ctx.author.mention} joined the draft! Total: {len(draft_sessions[ch].players)}")
         retur
-    if action == 'begin':
-        if str(ctx.author.id) != session['host']:
-            await ctx.send("Only host can begin.")
-            return
-        # optional set key
-        parts = ctx.message.content.strip().split()
-        set_key = None
+    if action == "begin":
+    # Must have an existing lobby session
+    if ch not in draftclashsessions or draftclashsessions[ch]['state'] not in ["lobby"]:
+        await ctx.send("No draft lobby open, or draft already underway. Use `!draftclash start` first!")
+        return
+    if str(ctx.author.id) != draftclashsessions[ch]['host']:
+        await ctx.send("Only the host can begin the draft.")
+        return
+    # Advance from lobby to drafting
+    draftclashsessions[ch]['state'] = "drafting"
+    draftclashsessions[ch]['setkey'] = set_key  # assuming passed
         if len(parts) > 2: set_key = parts[2].strip().lower()
         session['set_key'] = set_key or '24-25'
         session['state'] = 'formation'
