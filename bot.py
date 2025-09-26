@@ -383,7 +383,7 @@ async def on_message(message):
 
             if all_positions_loaded_successfully:
                 embed = discord.Embed(
-                    title="🎉 Auction Started",
+                    title="ðŸŽ‰ Auction Started",
                     description=
                     f"**Set Selected:** {available_sets[set_key]}\n\nOnly the host or <@{PRIVILEGED_USER_ID}> can run position commands and !endauction.",
                     color=discord.Color.green())
@@ -392,7 +392,7 @@ async def on_message(message):
                 await message.channel.send(embed=embed)
             else:
                 embed = discord.Embed(
-                    title="⚠️ Set Loaded with Warnings",
+                    title="âš ï¸ Set Loaded with Warnings",
                     description=
                     f"**Set Selected:** {available_sets[set_key]}\n\nNo players available for positions: {', '.join(error_positions)}.",
                     color=discord.Color.orange())
@@ -401,7 +401,7 @@ async def on_message(message):
         else:
             print(f"DEBUG (on_message): Set key '{set_key}' NOT found.")
             embed = discord.Embed(
-                title="❌ Invalid Set",
+                title="âŒ Invalid Set",
                 description="Please choose from the available sets:",
                 color=discord.Color.red())
             set_list = "\n".join([
@@ -425,7 +425,7 @@ async def on_message(message):
                 lineup_setup_state['required_counts'] = available_formations[
                     formation]
                 lineup_setup_state['stage'] = 'tactic'
-                embed = discord.Embed(title="🎯 Select Tactic",
+                embed = discord.Embed(title="ðŸŽ¯ Select Tactic",
                                       description="Please choose a tactic:",
                                       color=discord.Color.blue())
                 embed.add_field(name="Available Tactics",
@@ -435,7 +435,7 @@ async def on_message(message):
                 await message.channel.send(embed=embed)
             else:
                 embed = discord.Embed(
-                    title="❌ Invalid Formation",
+                    title="âŒ Invalid Formation",
                     description=
                     f"Please choose from: {', '.join(available_formations.keys())}",
                     color=discord.Color.red())
@@ -452,7 +452,7 @@ async def on_message(message):
                                         lineup_setup_state['stage'])
             else:
                 embed = discord.Embed(
-                    title="❌ Invalid Tactic",
+                    title="âŒ Invalid Tactic",
                     description=
                     f"Please choose from: {', '.join(available_tactics)}",
                     color=discord.Color.red())
@@ -487,7 +487,7 @@ async def on_message(message):
 
             if not matched_player:
                 embed = discord.Embed(
-                    title="❌ Invalid Player",
+                    title="âŒ Invalid Player",
                     description=
                     f"Player '{content}' is not in your team or doesn't match the {pos.upper()} position. Use !myplayers to check.",
                     color=discord.Color.red())
@@ -496,7 +496,7 @@ async def on_message(message):
 
             if matched_player in lineup_setup_state['selected_players']:
                 embed = discord.Embed(
-                    title="❌ Player Already Selected",
+                    title="âŒ Player Already Selected",
                     description=
                     f"{matched_player['name']} is already in your lineup.",
                     color=discord.Color.red())
@@ -529,8 +529,8 @@ async def on_message(message):
                 }
                 if not save_data():
                     await message.channel.send(
-                        "⚠️ Error saving lineup data. Please try again.")
-                embed = discord.Embed(title="✅ Lineup Set",
+                        "âš ï¸ Error saving lineup data. Please try again.")
+                embed = discord.Embed(title="âœ… Lineup Set",
                                       color=discord.Color.green())
                 embed.add_field(name="Formation",
                                 value=lineup_setup_state['formation'].upper(),
@@ -570,7 +570,7 @@ async def prompt_for_player(channel, user, position):
 
     if not available_players:
         embed = discord.Embed(
-            title="❌ No Players Available",
+            title="âŒ No Players Available",
             description=
             f"You have no available {position.upper()} players for your lineup.",
             color=discord.Color.red())
@@ -579,7 +579,7 @@ async def prompt_for_player(channel, user, position):
         return
 
     embed = discord.Embed(
-        title=f"📋 Select {position.upper()} ({count_needed} needed)",
+        title=f"ðŸ“‹ Select {position.upper()} ({count_needed} needed)",
         description=
         f"Please type the name or initial of a {position.upper()} player:",
         color=discord.Color.blue())
@@ -628,7 +628,7 @@ async def on_reaction_add(reaction, user):
     if auction_state['host'] == user.id:
         auction_state['last_host_activity'] = time.time()
 
-    if str(reaction.emoji) == '💰':
+    if str(reaction.emoji) == 'ðŸ’°':
         fake_ctx = type(
             'obj', (object, ), {
                 'author': user,
@@ -636,7 +636,7 @@ async def on_reaction_add(reaction, user):
                 'channel': reaction.message.channel
             })
         await bid(fake_ctx)
-    elif str(reaction.emoji) == '❌':
+    elif str(reaction.emoji) == 'âŒ':
         await handle_pass_reaction(user, reaction.message.channel)
 
 
@@ -669,14 +669,14 @@ async def handle_pass_reaction(user, channel):
         auction_state['unsold_players'].add(player['name'])
 
         embed = discord.Embed(
-            title="🚫 Player Unsold",
+            title="ðŸš« Player Unsold",
             description=
             f"**{player['name']}** received no bids and goes unsold.",
             color=discord.Color.red())
         await channel.send(embed=embed)
     else:
         embed = discord.Embed(
-            title="⚠️ Player Passed",
+            title="âš ï¸ Player Passed",
             description=
             f"{user.display_name} passed. Waiting for {len(remaining)} more to pass.",
             color=discord.Color.orange())
@@ -710,7 +710,7 @@ async def check_host_activity(channel_id):
             channel = bot.get_channel(channel_id)
             if channel:
                 await channel.send(
-                    "🔚 Auction ended due to host inactivity for 5 minutes. Participant budgets, teams, and lineups have been reset."
+                    "ðŸ”š Auction ended due to host inactivity for 5 minutes. Participant budgets, teams, and lineups have been reset."
                 )
 
             del active_auctions[channel_id]
@@ -725,14 +725,14 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
     """Starts a new auction, registers participants, and prompts for set selection."""
     if ctx.channel.id in active_auctions:
         await ctx.send(
-            "❌ An auction is already active in this channel. Please use a different channel or end the current auction first."
+            "âŒ An auction is already active in this channel. Please use a different channel or end the current auction first."
         )
         return
 
     if is_user_in_any_auction(
             ctx.author.id) and ctx.author.id != PRIVILEGED_USER_ID:
         await ctx.send(
-            f"❌ {ctx.author.display_name}, you are already participating in another auction."
+            f"âŒ {ctx.author.display_name}, you are already participating in another auction."
         )
         return
 
@@ -740,7 +740,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         if is_user_in_any_auction(
                 member.id) and member.id != PRIVILEGED_USER_ID:
             await ctx.send(
-                f"❌ {member.display_name} is already participating in another auction."
+                f"âŒ {member.display_name} is already participating in another auction."
             )
             return
 
@@ -784,7 +784,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         ensure_user_structures(participant_id)
 
     embed = discord.Embed(
-        title="🎯 Select Auction Set",
+        title="ðŸŽ¯ Select Auction Set",
         description="Please choose which set you want to auction:",
         color=discord.Color.blue())
 
@@ -805,7 +805,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
 @bot.command()
 async def sets(ctx):
     """Shows all available auction sets."""
-    embed = discord.Embed(title="🎯 Available Auction Sets",
+    embed = discord.Embed(title="ðŸŽ¯ Available Auction Sets",
                           description="Here are all the available sets:",
                           color=discord.Color.blue())
 
@@ -839,7 +839,7 @@ async def participants(ctx):
     current_set_name = available_sets.get(auction_state['current_set'],
                                           'No set selected')
 
-    embed = discord.Embed(title="👥 Registered Participants",
+    embed = discord.Embed(title="ðŸ‘¥ Registered Participants",
                           description="\n".join(users),
                           color=discord.Color.green())
     embed.add_field(name="Current Set", value=current_set_name, inline=False)
@@ -865,14 +865,14 @@ async def add(ctx, member: discord.Member):
 
     if is_user_in_any_auction(member.id) and member.id != PRIVILEGED_USER_ID:
         await ctx.send(
-            f"❌ {member.display_name} is already participating in another auction."
+            f"âŒ {member.display_name} is already participating in another auction."
         )
         return
 
     auction_state['participants'].add(str(member.id))
     ensure_user_structures(str(member.id))
 
-    await ctx.send(f"✅ {member.mention} has been added to this auction.")
+    await ctx.send(f"âœ… {member.mention} has been added to this auction.")
 
 
 @bot.command()
@@ -894,25 +894,25 @@ async def remove(ctx, member: discord.Member):
 
     if str(member.id) not in auction_state['participants']:
         await ctx.send(
-            f"❌ {member.mention} is not a participant in this auction.")
+            f"âŒ {member.mention} is not a participant in this auction.")
         return
 
     confirm_msg = await ctx.send(
-        f"⚠️ Are you sure you want to remove {member.mention} from this auction? React with ✅ to confirm."
+        f"âš ï¸ Are you sure you want to remove {member.mention} from this auction? React with âœ… to confirm."
     )
-    await confirm_msg.add_reaction("✅")
+    await confirm_msg.add_reaction("âœ…")
 
     def check(reaction, user):
         return user == ctx.author and str(
-            reaction.emoji) == "✅" and reaction.message.id == confirm_msg.id
+            reaction.emoji) == "âœ…" and reaction.message.id == confirm_msg.id
 
     try:
         await bot.wait_for('reaction_add', timeout=15.0, check=check)
         auction_state['participants'].remove(str(member.id))
         await ctx.send(
-            f"❌ {member.mention} has been removed from this auction.")
+            f"âŒ {member.mention} has been removed from this auction.")
     except asyncio.TimeoutError:
-        await ctx.send("⏰ Removal cancelled. No confirmation received in time."
+        await ctx.send("â° Removal cancelled. No confirmation received in time."
                        )
 
 
@@ -937,7 +937,7 @@ async def setlineup(ctx, lineup_name: str = 'main'):
     lineup_setup_state['lineup_name'] = lineup_name.lower()
 
     embed = discord.Embed(
-        title="🎯 Select Formation",
+        title="ðŸŽ¯ Select Formation",
         description="Please choose a formation for your lineup:",
         color=discord.Color.blue())
     embed.add_field(name="Available Formations",
@@ -956,7 +956,7 @@ async def setlineup(ctx, lineup_name: str = 'main'):
         if lineup_setup_state['user_id'] == user_id and lineup_setup_state[
                 'stage'] is not None:
             await ctx.send(
-                "⏰ Lineup setup timed out. Please run !setlineup again.")
+                "â° Lineup setup timed out. Please run !setlineup again.")
             reset_lineup_setup_state()
 
 
@@ -970,7 +970,7 @@ async def viewlineup(ctx):
         return
 
     lineup = user_lineups[user_id]
-    embed = discord.Embed(title=f"📋 {ctx.author.display_name}'s Lineup",
+    embed = discord.Embed(title=f"ðŸ“‹ {ctx.author.display_name}'s Lineup",
                           color=discord.Color.teal())
     embed.add_field(name="Formation",
                     value=lineup['formation'].upper(),
@@ -1008,7 +1008,7 @@ def create_position_command(position):
 
         if auction_state['current_set'] is None:
             await ctx.send(
-                "❌ No set has been selected for this auction. The host needs to select a set first."
+                "âŒ No set has been selected for this auction. The host needs to select a set first."
             )
             return
 
@@ -1056,7 +1056,7 @@ def create_position_command(position):
                                                     MIN_BASE_PRICE)
         auction_state['highest_bidder'] = None
 
-        embed = discord.Embed(title="🔨 Player Up for Auction",
+        embed = discord.Embed(title="ðŸ”¨ Player Up for Auction",
                               color=discord.Color.gold())
         embed.add_field(name="Name", value=player['name'], inline=True)
         embed.add_field(name="Position",
@@ -1073,12 +1073,12 @@ def create_position_command(position):
                         inline=False)
         embed.set_footer(
             text=
-            "Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass."
+            "Use !bid or !bid [amount] to place a bid. React with ðŸ’° to bid, âŒ to pass."
         )
 
         message = await ctx.send(embed=embed)
-        await message.add_reaction("💰")
-        await message.add_reaction("❌")
+        await message.add_reaction("ðŸ’°")
+        await message.add_reaction("âŒ")
 
         async def auto_sold():
             try:
@@ -1091,19 +1091,19 @@ def create_position_command(position):
                                          False) or auction_state.get(
                                              'current_player') != player:
                     return
-                await ctx.send("⌛ Going once...")
+                await ctx.send("âŒ› Going once...")
                 await asyncio.sleep(1)
                 if not auction_state.get('bidding',
                                          False) or auction_state.get(
                                              'current_player') != player:
                     return
-                await ctx.send("⌛ Going twice...")
+                await ctx.send("âŒ› Going twice...")
                 await asyncio.sleep(1)
                 if not auction_state.get('bidding',
                                          False) or auction_state.get(
                                              'current_player') != player:
                     return
-                await ctx.send("⌛ Final call...")
+                await ctx.send("âŒ› Final call...")
                 await asyncio.sleep(1)
                 if not auction_state.get('bidding',
                                          False) or auction_state.get(
@@ -1166,7 +1166,7 @@ async def bid(ctx, *args):
                 return
         except ValueError:
             await ctx.send(
-                "❌ Invalid price format. Use numbers like 10m or 1000000.")
+                "âŒ Invalid price format. Use numbers like 10m or 1000000.")
             return
 
         # Check if player has been sold or unsold
@@ -1174,12 +1174,12 @@ async def bid(ctx, *args):
             for player in team:
                 if player['name'].lower() == player_name.lower():
                     await ctx.send(
-                        f"❌ Player **{player_name}** has already been sold.")
+                        f"âŒ Player **{player_name}** has already been sold.")
                     return
 
         if player_name.lower() in auction_state['unsold_players']:
             await ctx.send(
-                f"❌ Player **{player_name}** was previously marked as unsold in this auction."
+                f"âŒ Player **{player_name}** was previously marked as unsold in this auction."
             )
             return
 
@@ -1208,7 +1208,7 @@ async def bid(ctx, *args):
         if auction_state['timeout_task']:
             auction_state['timeout_task'].cancel()
 
-        embed = discord.Embed(title="🔨 Custom Player Up for Auction",
+        embed = discord.Embed(title="ðŸ”¨ Custom Player Up for Auction",
                               color=discord.Color.gold())
         embed.add_field(name="Name", value=custom_player['name'], inline=True)
         embed.add_field(name="Position", value="Custom", inline=True)
@@ -1222,12 +1222,12 @@ async def bid(ctx, *args):
                         inline=False)
         embed.set_footer(
             text=
-            "Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass."
+            "Use !bid or !bid [amount] to place a bid. React with ðŸ’° to bid, âŒ to pass."
         )
 
         message = await ctx.send(embed=embed)
-        await message.add_reaction("💰")
-        await message.add_reaction("❌")
+        await message.add_reaction("ðŸ’°")
+        await message.add_reaction("âŒ")
 
         async def auto_sold():
             try:
@@ -1240,19 +1240,19 @@ async def bid(ctx, *args):
                         'bidding', False) or auction_state.get(
                             'current_player') != custom_player:
                     return
-                await ctx.send("⌛ Going once...")
+                await ctx.send("âŒ› Going once...")
                 await asyncio.sleep(1)
                 if not auction_state.get(
                         'bidding', False) or auction_state.get(
                             'current_player') != custom_player:
                     return
-                await ctx.send("⌛ Going twice...")
+                await ctx.send("âŒ› Going twice...")
                 await asyncio.sleep(1)
                 if not auction_state.get(
                         'bidding', False) or auction_state.get(
                             'current_player') != custom_player:
                     return
-                await ctx.send("⌛ Final call...")
+                await ctx.send("âŒ› Final call...")
                 await asyncio.sleep(1)
                 if not auction_state.get(
                         'bidding', False) or auction_state.get(
@@ -1299,7 +1299,7 @@ async def bid(ctx, *args):
             new_price = int(float(amount) * multiplier)
         except ValueError:
             await ctx.send(
-                "❌ Invalid bid amount format. Use numbers like 50m or 1000000."
+                "âŒ Invalid bid amount format. Use numbers like 50m or 1000000."
             )
             return
 
@@ -1311,7 +1311,7 @@ async def bid(ctx, *args):
                 'current_price'] + MIN_BID_INCREMENT and new_price != auction_state[
                     'current_price']:
             await ctx.send(
-                f"❌ Minimum bid increment is {format_currency(MIN_BID_INCREMENT)}."
+                f"âŒ Minimum bid increment is {format_currency(MIN_BID_INCREMENT)}."
             )
             return
     else:
@@ -1326,7 +1326,7 @@ async def bid(ctx, *args):
     auction_state['current_price'] = new_price
     auction_state['highest_bidder'] = user_id
     await ctx.send(
-        f"🟡 {ctx.author.display_name} bids {format_currency(new_price)}!")
+        f"ðŸŸ¡ {ctx.author.display_name} bids {format_currency(new_price)}!")
 
     if auction_state['timeout_task']:
         auction_state['timeout_task'].cancel()
@@ -1340,17 +1340,17 @@ async def bid(ctx, *args):
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
                 return
-            await ctx.send("⌛ Going once...")
+            await ctx.send("âŒ› Going once...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
                 return
-            await ctx.send("⌛ Going twice...")
+            await ctx.send("âŒ› Going twice...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
                 return
-            await ctx.send("⌛ Final call...")
+            await ctx.send("âŒ› Final call...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
@@ -1378,7 +1378,7 @@ async def _finalize_sold(ctx):
         auction_state['highest_bidder'] = None
         auction_state['pass_votes'].clear()
         await ctx.send(
-            f"❌ No one bid for **{player['name']}**. They go unsold.")
+            f"âŒ No one bid for **{player['name']}**. They go unsold.")
         return
 
     winner_id = auction_state['highest_bidder']
@@ -1424,10 +1424,10 @@ async def _finalize_sold(ctx):
     auction_state['pass_votes'].clear()
     if not save_data():
         await ctx.send(
-            "⚠️ Error saving data. Sale recorded but data may not persist.")
+            "âš ï¸ Error saving data. Sale recorded but data may not persist.")
         return
 
-    embed = discord.Embed(title="✅ Player Sold!", color=discord.Color.green())
+    embed = discord.Embed(title="âœ… Player Sold!", color=discord.Color.green())
     embed.add_field(name="Player", value=player['name'], inline=True)
     embed.add_field(name="Sold To",
                     value=f"<@{winner_id}> ({winner_name})",
@@ -1496,7 +1496,7 @@ async def rebid(ctx):
 
     if not save_data():
         await ctx.send(
-            "⚠️ Error saving data. Rebid proceeding, but data may not persist."
+            "âš ï¸ Error saving data. Rebid proceeding, but data may not persist."
         )
 
     # Start re-auction
@@ -1510,7 +1510,7 @@ async def rebid(ctx):
     if auction_state['timeout_task']:
         auction_state['timeout_task'].cancel()
 
-    embed = discord.Embed(title="🔨 Player Re-Auction",
+    embed = discord.Embed(title="ðŸ”¨ Player Re-Auction",
                           color=discord.Color.gold())
     embed.add_field(name="Name", value=player['name'], inline=True)
     embed.add_field(name="Position",
@@ -1528,12 +1528,12 @@ async def rebid(ctx):
                     inline=False)
     embed.set_footer(
         text=
-        "Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass."
+        "Use !bid or !bid [amount] to place a bid. React with ðŸ’° to bid, âŒ to pass."
     )
 
     message = await ctx.send(embed=embed)
-    await message.add_reaction("💰")
-    await message.add_reaction("❌")
+    await message.add_reaction("ðŸ’°")
+    await message.add_reaction("âŒ")
 
     async def auto_sold():
         try:
@@ -1544,17 +1544,17 @@ async def rebid(ctx):
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
                 return
-            await ctx.send("⌛ Going once...")
+            await ctx.send("âŒ› Going once...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
                 return
-            await ctx.send("⌛ Going twice...")
+            await ctx.send("âŒ› Going twice...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
                 return
-            await ctx.send("⌛ Final call...")
+            await ctx.send("âŒ› Final call...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
@@ -1565,7 +1565,7 @@ async def rebid(ctx):
 
     auction_state['timeout_task'] = bot.loop.create_task(auto_sold())
     await ctx.send(
-        f"✅ **{player['name']}** is being re-auctioned. Previous buyer <@{buyer_id}> has been refunded {format_currency(price)}."
+        f"âœ… **{player['name']}** is being re-auctioned. Previous buyer <@{buyer_id}> has been refunded {format_currency(price)}."
     )
 
 
@@ -1610,7 +1610,7 @@ async def status(ctx):
 
     if not auction_state['bidding'] or not auction_state['current_player']:
         await ctx.send(
-            "⚠️ No player is currently being auctioned in this channel.")
+            "âš ï¸ No player is currently being auctioned in this channel.")
         return
 
     player = auction_state['current_player']
@@ -1618,7 +1618,7 @@ async def status(ctx):
     bidder_id = auction_state['highest_bidder']
     bidder = f"<@{bidder_id}>" if bidder_id else "None"
 
-    embed = discord.Embed(title="📢 Current Auction Status",
+    embed = discord.Embed(title="ðŸ“¢ Current Auction Status",
                           color=discord.Color.blue())
     embed.add_field(name="Player", value=player['name'], inline=True)
     embed.add_field(name="Position",
@@ -1672,7 +1672,7 @@ async def unsold(ctx):
         auction_state['timeout_task'].cancel()
 
     await ctx.send(
-        f"❌ Player **{player['name']}** goes unsold in this auction.")
+        f"âŒ Player **{player['name']}** goes unsold in this auction.")
 
 
 @bot.command()
@@ -1688,7 +1688,7 @@ async def myplayers(ctx):
         active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
 
     team = user_teams[user_id]
-    embed = discord.Embed(title=f"📋 {ctx.author.display_name}'s Players",
+    embed = discord.Embed(title=f"ðŸ“‹ {ctx.author.display_name}'s Players",
                           color=discord.Color.teal())
 
     for p in team:
@@ -1712,7 +1712,7 @@ async def budget(ctx):
             ctx.channel.id]['host'] == ctx.author.id:
         active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
 
-    await ctx.send(f"💰 Your remaining budget: {format_currency(budget)}")
+    await ctx.send(f"ðŸ’° Your remaining budget: {format_currency(budget)}")
 
 
 def calculate_team_score_based_on_lineup(user_id, lineup_name=None):
@@ -1888,47 +1888,47 @@ def simulate_match(team1_id, team2_id, team1, team2):
         if event == 'goal':
             if pos in ['ST', 'LW', 'RW', 'CAM']:
                 narrative.append(
-                    f"⚽ {player_name} ({pos}) scores a {random.choice(['stunning', 'clinical', 'brilliant'])} goal for {team_name_display}!"
+                    f"âš½ {player_name} ({pos}) scores a {random.choice(['stunning', 'clinical', 'brilliant'])} goal for {team_name_display}!"
                 )
             else:
                 narrative.append(
-                    f"⚽ {player_name} ({pos}) scores a rare goal for {team_name_display}!"
+                    f"âš½ {player_name} ({pos}) scores a rare goal for {team_name_display}!"
                 )
         elif event == 'save':
             if pos == 'GK':
                 narrative.append(
-                    f"🧤 {player_name} ({pos}) makes a fantastic save to deny {team_name_display}'s opponent!"
+                    f"ðŸ§¤ {player_name} ({pos}) makes a fantastic save to deny {team_name_display}'s opponent!"
                 )
             else:
                 narrative.append(
-                    f"🧤 {team_name_display}'s goalkeeper makes a crucial save!"
+                    f"ðŸ§¤ {team_name_display}'s goalkeeper makes a crucial save!"
                 )
         elif event == 'chance':
             if pos in ['ST', 'LW', 'RW', 'CAM']:
                 narrative.append(
-                    f"🎯 {player_name} ({pos}) misses a golden opportunity for {team_name_display}!"
+                    f"ðŸŽ¯ {player_name} ({pos}) misses a golden opportunity for {team_name_display}!"
                 )
             else:
                 narrative.append(
-                    f"🎯 {player_name} ({pos}) creates a chance for {team_name_display}!"
+                    f"ðŸŽ¯ {player_name} ({pos}) creates a chance for {team_name_display}!"
                 )
         elif event == 'tackle':
             if pos in ['CB', 'LB', 'RB', 'CM']:
                 narrative.append(
-                    f"💪 {player_name} ({pos}) makes a crunching tackle to stop {team_name_display}'s opponent!"
+                    f"ðŸ’ª {player_name} ({pos}) makes a crunching tackle to stop {team_name_display}'s opponent!"
                 )
             else:
                 narrative.append(
-                    f"💪 {player_name} ({pos}) makes a key defensive play for {team_name_display}!"
+                    f"ðŸ’ª {player_name} ({pos}) makes a key defensive play for {team_name_display}!"
                 )
         elif event == 'assist':
             if pos in ['CAM', 'LW', 'RW', 'CM']:
                 narrative.append(
-                    f"🎁 {player_name} ({pos}) delivers a perfect assist for {team_name_display}!"
+                    f"ðŸŽ {player_name} ({pos}) delivers a perfect assist for {team_name_display}!"
                 )
             else:
                 narrative.append(
-                    f"🎁 {player_name} ({pos}) sets up a goal for {team_name_display}!"
+                    f"ðŸŽ {player_name} ({pos}) sets up a goal for {team_name_display}!"
                 )
 
     if team1_tactic == 'Attacking' and team1_goals > team2_goals:
@@ -2017,7 +2017,7 @@ async def battle(ctx, team1: discord.Member, team2: discord.Member):
     team2_formation = team2_lineup['formation'] if team2_lineup[
         'players'] else '4-4-2'
 
-    embed = discord.Embed(title="⚽ Match Result", color=discord.Color.purple())
+    embed = discord.Embed(title="âš½ Match Result", color=discord.Color.purple())
     embed.add_field(name="Teams",
                     value=f"{team1.display_name} vs {team2.display_name}",
                     inline=False)
@@ -2052,14 +2052,14 @@ async def battle(ctx, team1: discord.Member, team2: discord.Member):
 
     if team1_goals > team2_goals:
         embed.add_field(name="Winner",
-                        value=f"{team1.display_name} 🏆",
+                        value=f"{team1.display_name} ðŸ†",
                         inline=False)
     elif team2_goals > team1_goals:
         embed.add_field(name="Winner",
-                        value=f"{team2.display_name} 🏆",
+                        value=f"{team2.display_name} ðŸ†",
                         inline=False)
     else:
-        embed.add_field(name="Result", value="Draw 🤝", inline=False)
+        embed.add_field(name="Result", value="Draw ðŸ¤", inline=False)
 
     embed.set_footer(
         text="Use !battle @user1 @user2 to simulate another match!")
@@ -2103,7 +2103,7 @@ async def rankteams(ctx):
 
     team_scores.sort(key=lambda x: x[1], reverse=True)
 
-    embed = discord.Embed(title="🏆 Team Rankings (Based on Lineup)",
+    embed = discord.Embed(title="ðŸ† Team Rankings (Based on Lineup)",
                           color=discord.Color.gold())
     description_list = []
 
@@ -2189,72 +2189,72 @@ async def endauction(ctx):
 
     if not save_data():
         await ctx.send(
-            "⚠️ Error saving data. Auction ended, but data may not persist.")
+            "âš ï¸ Error saving data. Auction ended, but data may not persist.")
         return
 
     await ctx.send(
-        "🔚 Auction in this channel has been ended. Participant budgets, teams, and lineups have been reset."
+        "ðŸ”š Auction in this channel has been ended. Participant budgets, teams, and lineups have been reset."
     )
 
 @bot.command()
 async def footy(ctx, category: str = None):
     """Shows categorized help for the bot."""
-    embed = discord.Embed(title="📘 Football Auction Bot Commands",
+    embed = discord.Embed(title="ðŸ“˜ Football Auction Bot Commands",
                           color=discord.Color.blue())
 
     if category is None:
         embed.description = (
             "Use `!footy <category>` to view commands in that category.\n\n"
             "Available categories:\n"
-            "⚽ auction, 👥 team, 🎮 gamemodes, 📊 leaderboards")
+            "âš½ auction, ðŸ‘¥ team, ðŸŽ® gamemodes, ðŸ“Š leaderboards")
     elif category.lower() == "auction":
         embed.add_field(
             name="Auction Commands",
             value="\n".join([
-                "`!startauction @users...` – Start a new auction",
-                "`!sets` – Show all available sets",
-                "`!participants` – List participants",
-                "`!bid [amount]` – Place a bid",
-                "`!sold / !unsold` – Resolve auction",
-                "`!status` – Current auction status",
-                "`!endauction` – End current auction"
+                "`!startauction @users...` â€“ Start a new auction",
+                "`!sets` â€“ Show all available sets",
+                "`!participants` â€“ List participants",
+                "`!bid [amount]` â€“ Place a bid",
+                "`!sold / !unsold` â€“ Resolve auction",
+                "`!status` â€“ Current auction status",
+                "`!endauction` â€“ End current auction"
         ]),
         inline=False)
     elif category.lower() == "team":
         embed.add_field(name="Team Commands",
                         value="\n".join([
-                            "`!myplayers` – View your bought players",
-                            "`!budget` – Show your budget",
-                            "`!setlineup [name]` – Setup/edit a lineup",
-                            "`!lineups` – View all your lineups",
-                            "`!switchlineup <name>` – Switch active lineup",
-                            "`!deletelineup <name>` – Delete a lineup",
-                            "`!viewlineup` – View your active lineup",
-                            "`!battle @user1 @user2` – Simulate a match"
+                            "`!myplayers` â€“ View your bought players",
+                            "`!budget` â€“ Show your budget",
+                            "`!setlineup [name]` â€“ Setup/edit a lineup",
+                            "`!lineups` â€“ View all your lineups",
+                            "`!switchlineup <name>` â€“ Switch active lineup",
+                            "`!deletelineup <name>` â€“ Delete a lineup",
+                            "`!viewlineup` â€“ View your active lineup",
+                            "`!battle @user1 @user2` â€“ Simulate a match"
                         ]),
                         inline=False)
     elif category.lower() == "gamemodes":
         embed.add_field(
             name="Gamemodes",
             value="\n".join([
-                "`!koth start` – Start King of the Hill (max 6 players)",
-                "`!draftclash start` – Start Draft Clash (max 8 players)",
-                "`!draftclash koth` – Enter KoTH with drafted team",
-                "`!challenge @user` – Challenge for the throne",
-                "`!end <gamemode>` – End active game sessions"
+                "`!koth start` â€“ Start King of the Hill (max 6 players)",
+                "`!draftclash start` â€“ Start Draft Clash (max 8 players)",
+                "`!draftclash koth` â€“ Enter KoTH with drafted team",
+                "`!challenge @user` â€“ Challenge for the throne",
+                "`!end <gamemode>` â€“ End active game sessions"
             ]),
             inline=False)
     elif category.lower() == "leaderboards":
         embed.add_field(
             name="Leaderboards",
             value="\n".join([
-                "`!leaderboard auction` – Auction stats",
-                "`!leaderboard gamemodes` – KoTH & Draft Clash stats",
-                "`!draftclashleaderboard` – Draft Clash wins"
+                "`!leaderboard auction` â€“ Auction stats",
+                "`!leaderboard gamemodes` â€“ KoTH & Draft Clash stats",
+                "`!draftclashleaderboard` â€“ Draft Clash wins"
             ]),
             inline=False)
     else:
-        embed.description = "❌ Unknown category. Try: auction, team, gamemodes, leaderboards."
+        embed.description = "âŒ Unknown category. Try: auction, team, gamemodes, leaderboards."
 
     await ctx.send(embed=embed)
 
@@ -2271,7 +2271,7 @@ import random
 async def market(ctx):
     """Show free agent players available to bid on."""
     free_agents = ["Player A", "Player B", "Player C", "Player D", "Player E"]
-    embed = discord.Embed(title="🛒 Free Agent Market",
+    embed = discord.Embed(title="ðŸ›’ Free Agent Market",
                           color=discord.Color.gold())
     for p in free_agents:
         form = player_form.get(p, 5)
@@ -2286,30 +2286,30 @@ async def market(ctx):
 async def events(ctx):
     """Trigger or show random events."""
     events_list = [
-        "🚑 Injury – One of your players is out for 2 matches!",
-        "⚡ Form Boost – Random player gains +2 form for 3 matches!",
-        "🔄 Transfer Rumor – Random player may be swapped with the market!",
+        "ðŸš‘ Injury â€“ One of your players is out for 2 matches!",
+        "âš¡ Form Boost â€“ Random player gains +2 form for 3 matches!",
+        "ðŸ”„ Transfer Rumor â€“ Random player may be swapped with the market!",
     ]
     event = random.choice(events_list)
-    await ctx.send(f"🎲 Random Event: {event}")
+    await ctx.send(f"ðŸŽ² Random Event: {event}")
 
 
 @bot.group(invoke_without_command=True)
 async def draft(ctx):
     """Draft mode base command."""
     await ctx.send(
-        "📋 Use `!draft start` to begin the draft or `!draft pick <player>` to pick a player."
+        "ðŸ“‹ Use `!draft start` to begin the draft or `!draft pick <player>` to pick a player."
     )
 
 
 @draft.command()
 async def start(ctx):
-    await ctx.send("📋 Draft mode started! Turn order will be assigned.")
+    await ctx.send("ðŸ“‹ Draft mode started! Turn order will be assigned.")
 
 
 @draft.command()
 async def pick(ctx, *, player_name):
-    await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
+    await ctx.send(f"âœ… {ctx.author.mention} picked **{player_name}**.")
 
 
 # -------------------- Added Gamemodes: KoTH, Draft Clash, Mystery Box --------------------
@@ -2329,7 +2329,7 @@ draft_clash_wins = {}
 # -------------------- KoTH --------------------
 # ...existing code above...
 
-EMOJI_NUMBERS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣']
+EMOJI_NUMBERS = ['1ï¸âƒ£', '2ï¸âƒ£', '3ï¸âƒ£', '4ï¸âƒ£']
 
 async def ask_formation_choice(ctx, user, formations):
     """Ask a user to pick a formation from 4 random options using emoji."""
@@ -2423,12 +2423,12 @@ async def draftclash(ctx, action: str = None, set_key: str = None):
     }
     save_data()
     join_msg = await ctx.send(
-        f"Draft Clash lobby created by {ctx.author.mention}. React with ✅ to join! Host uses `!draftclash begin <set_key>` to start."
+        f"Draft Clash lobby created by {ctx.author.mention}. React with âœ… to join! Host uses `!draftclash begin <set_key>` to start."
     )
-    await join_msg.add_reaction("✅")
+    await join_msg.add_reaction("âœ…")
 
     def check(reaction, user):
-        return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
+        return str(reaction.emoji) == "âœ…" and reaction.message.id == join_msg.id and not user.bot
 
     async def wait_for_joins():
         while draft_clash_sessions[ch]['state'] == 'lobby':
@@ -2613,14 +2613,14 @@ async def _draft_run_knockout(ctx, session):
                 winner = a
             nxt.append(winner)
             await ctx.send(
-                f"Round {round_no}: <@{a}> vs <@{b}> — Winner: <@{winner}>")
+                f"Round {round_no}: <@{a}> vs <@{b}> â€” Winner: <@{winner}>")
         bracket = nxt
         round_no += 1
     champ = bracket[0] if bracket else None
     if champ: 
-        await ctx.send(f"🏁 Draft Clash Champion: <@{champ}>")
+        await ctx.send(f"ðŸ Draft Clash Champion: <@{champ}>")
         # Announce KoTH integration
-        await ctx.send("🎯 **Draft lineups are now ready for King of the Hill!** All participants can use `!draftclash koth` to enter KoTH battles with their drafted teams.")
+        await ctx.send("ðŸŽ¯ **Draft lineups are now ready for King of the Hill!** All participants can use `!draftclash koth` to enter KoTH battles with their drafted teams.")
     draft_clash_wins[str(champ)] = draft_clash_wins.get(str(champ), 0) + 1
     save_data()
     ensure_user_structures(champ)
@@ -2640,8 +2640,8 @@ async def draftclashleaderboard(ctx):
         return
     items = sorted(draft_clash_wins.items(), key=lambda x: x[1],
                    reverse=True)[:10]
-    desc = "\n".join([f"<@{uid}> — {wins} wins" for uid, wins in items])
-    embed = discord.Embed(title="⚡ Draft Clash Leaderboard",
+    desc = "\n".join([f"<@{uid}> â€” {wins} wins" for uid, wins in items])
+    embed = discord.Embed(title="âš¡ Draft Clash Leaderboard",
                           description=desc,
                           color=discord.Color.blue())
     await ctx.send(embed=embed)
@@ -2654,21 +2654,21 @@ async def lineups(ctx):
     """Show all your saved lineups."""
     user_id = str(ctx.author.id)
     if user_id not in user_lineups or not user_lineups[user_id]:
-        await ctx.send("❌ You don't have any lineups yet. Use `!setlineup` to create one!")
+        await ctx.send("âŒ You don't have any lineups yet. Use `!setlineup` to create one!")
         return
     
     active_name = active_lineups.get(user_id, 'main')
-    embed = discord.Embed(title="🎯 Your Lineups", color=discord.Color.blue())
+    embed = discord.Embed(title="ðŸŽ¯ Your Lineups", color=discord.Color.blue())
     
     for lineup_name, lineup_data in user_lineups[user_id].items():
         player_count = len(lineup_data.get('players', []))
         formation = lineup_data.get('formation', '4-4-2')
         tactic = lineup_data.get('tactic', 'Balanced')
         
-        status = "🟢 ACTIVE" if lineup_name == active_name else "⚪"
+        status = "ðŸŸ¢ ACTIVE" if lineup_name == active_name else "âšª"
         value = f"{status}\n{player_count}/11 players\n{formation} ({tactic})"
         
-        embed.add_field(name=f"📋 {lineup_name.title()}", value=value, inline=True)
+        embed.add_field(name=f"ðŸ“‹ {lineup_name.title()}", value=value, inline=True)
     
     embed.set_footer(text="Use !switchlineup <name> to change active lineup | !setlineup <name> to create/edit")
     await ctx.send(embed=embed)
@@ -2677,14 +2677,14 @@ async def lineups(ctx):
 async def switchlineup(ctx, lineup_name: str = None):
     """Switch to a different lineup for battles."""
     if lineup_name is None:
-        await ctx.send("❌ Please specify a lineup name: `!switchlineup <name>`")
+        await ctx.send("âŒ Please specify a lineup name: `!switchlineup <name>`")
         return
     
     user_id = str(ctx.author.id)
     lineup_name = lineup_name.lower()
     
     if user_id not in user_lineups or lineup_name not in user_lineups[user_id]:
-        await ctx.send(f"❌ Lineup '{lineup_name}' doesn't exist. Use `!lineups` to see available lineups.")
+        await ctx.send(f"âŒ Lineup '{lineup_name}' doesn't exist. Use `!lineups` to see available lineups.")
         return
     
     active_lineups[user_id] = lineup_name
@@ -2695,25 +2695,25 @@ async def switchlineup(ctx, lineup_name: str = None):
     formation = lineup_data.get('formation', '4-4-2')
     tactic = lineup_data.get('tactic', 'Balanced')
     
-    await ctx.send(f"✅ Switched to lineup: **{lineup_name.title()}**\n"
-                  f"📋 {player_count}/11 players | {formation} ({tactic})")
+    await ctx.send(f"âœ… Switched to lineup: **{lineup_name.title()}**\n"
+                  f"ðŸ“‹ {player_count}/11 players | {formation} ({tactic})")
 
 @bot.command()
 async def deletelineup(ctx, lineup_name: str = None):
     """Delete a saved lineup."""
     if lineup_name is None:
-        await ctx.send("❌ Please specify a lineup name: `!deletelineup <name>`")
+        await ctx.send("âŒ Please specify a lineup name: `!deletelineup <name>`")
         return
     
     user_id = str(ctx.author.id)
     lineup_name = lineup_name.lower()
     
     if lineup_name == 'main':
-        await ctx.send("❌ Cannot delete the main lineup!")
+        await ctx.send("âŒ Cannot delete the main lineup!")
         return
     
     if user_id not in user_lineups or lineup_name not in user_lineups[user_id]:
-        await ctx.send(f"❌ Lineup '{lineup_name}' doesn't exist.")
+        await ctx.send(f"âŒ Lineup '{lineup_name}' doesn't exist.")
         return
     
     del user_lineups[user_id][lineup_name]
@@ -2723,7 +2723,7 @@ async def deletelineup(ctx, lineup_name: str = None):
         active_lineups[user_id] = 'main'
     
     save_data()
-    await ctx.send(f"🗑️ Deleted lineup: **{lineup_name.title()}**")
+    await ctx.send(f"ðŸ—‘ï¸ Deleted lineup: **{lineup_name.title()}**")
 
 @bot.command()
 async def end(ctx, gamemode: str = None):
@@ -2744,7 +2744,7 @@ async def end(ctx, gamemode: str = None):
         koth_state['current_king_id'] = None
         koth_state['king_streak'] = 0
         save_data()
-        await ctx.send("👑 King of the Hill session has been ended.")
+        await ctx.send("ðŸ‘‘ King of the Hill session has been ended.")
         
     elif gamemode == "draftclash":
         if ch not in draft_clash_sessions:
@@ -2759,10 +2759,10 @@ async def end(ctx, gamemode: str = None):
             
         del draft_clash_sessions[ch]
         save_data()
-        await ctx.send("⚡ Draft Clash session has been ended.")
+        await ctx.send("âš¡ Draft Clash session has been ended.")
         
     else:
-        await ctx.send("❌ Unknown game mode. Available: koth, draftclash")
+        await ctx.send("âŒ Unknown game mode. Available: koth, draftclash")
 
 def load_koth(file):
     if os.path.exists(file):
@@ -2785,7 +2785,7 @@ async def koth_add(ctx, *members: discord.Member):
     elif ctx.channel.id in koth_auction and koth_auction[ctx.channel.id]["active"]:
         mode = "auction"; session = koth_auction[ctx.channel.id]
     else:
-        await ctx.send("⚠️ No active KoTH session in this channel!"); return
+        await ctx.send("âš ï¸ No active KoTH session in this channel!"); return
 
     for m in members:
         if m.id not in session["players"]:
@@ -2844,11 +2844,11 @@ async def koth(ctx, action: str = None, mode: str = None):
                 "created_at": time.time()
             }
             _save_json(KOTH_AUCTION_FILE, koth_auction)
-            await ctx.send(f"🏟️ Auction KoTH started (ID `{session_id}`). Use `!koth add {session_id} @user1 @user2` to add players. Multiple Auction KoTH allowed in this channel.")
+            await ctx.send(f"ðŸŸï¸ Auction KoTH started (ID `{session_id}`). Use `!koth add {session_id} @user1 @user2` to add players. Multiple Auction KoTH allowed in this channel.")
             return
         elif mode == "draftclash":
             if chan in koth_draft and koth_draft[chan].get("active"):
-                await ctx.send("⚠️ A Draft Clash KoTH is already running in this channel!")
+                await ctx.send("âš ï¸ A Draft Clash KoTH is already running in this channel!")
                 return
             koth_draft[chan] = {
                 "id": str(uuid.uuid4())[:8],
@@ -2860,7 +2860,7 @@ async def koth(ctx, action: str = None, mode: str = None):
                 "created_at": time.time()
             }
             _save_json(KOTH_DRAFT_FILE, koth_draft)
-            await ctx.send("🏆 Draft Clash KoTH started! Use `!koth add @user1 @user2` to add players. (Draft Clash KoTH uses Draft Clash squads only.)")
+            await ctx.send("ðŸ† Draft Clash KoTH started! Use `!koth add @user1 @user2` to add players. (Draft Clash KoTH uses Draft Clash squads only.)")
             return
         else:
             await ctx.send("Usage: `!koth start auction` or `!koth start draftclash`")
@@ -2902,7 +2902,7 @@ async def koth(ctx, action: str = None, mode: str = None):
             uid=str(m.id)
             # check lineup existence
             if uid not in user_lineups:
-                await ctx.send(f"⚠️ {m.display_name} has no lineup set. They must set a lineup first.")
+                await ctx.send(f"âš ï¸ {m.display_name} has no lineup set. They must set a lineup first.")
                 continue
             # For draft mode, ideally check draft-specific lineup; here we assume users set distinct lineup
             if uid not in target_session["players"]:
@@ -2922,7 +2922,7 @@ async def koth(ctx, action: str = None, mode: str = None):
 async def challenge(ctx, opponent: discord.Member = None):
     """Challenge someone in the active KoTH session. Use: !challenge @user"""
     if opponent is None:
-        await ctx.send("⚠️ You must mention someone to challenge. Usage: `!challenge @user`")
+        await ctx.send("âš ï¸ You must mention someone to challenge. Usage: `!challenge @user`")
         return
 
     chan = str(ctx.channel.id)
@@ -2946,7 +2946,7 @@ async def challenge(ctx, opponent: discord.Member = None):
                 break
 
     if not target:
-        await ctx.send("⚠️ No active KoTH session in this channel. Start one with `!koth start auction` or `!koth start draftclash`.")
+        await ctx.send("âš ï¸ No active KoTH session in this channel. Start one with `!koth start auction` or `!koth start draftclash`.")
         return
 
     # membership check
@@ -2955,7 +2955,7 @@ async def challenge(ctx, opponent: discord.Member = None):
     players = target.get("players", [])
 
     if challenger_id not in players or opponent_id not in players:
-        await ctx.send("⚠️ Both challenger and opponent must be added to the KoTH session via `!koth add`.")
+        await ctx.send("âš ï¸ Both challenger and opponent must be added to the KoTH session via `!koth add`.")
         return
 
     # lineup checks (require a saved lineup)
@@ -2967,10 +2967,10 @@ async def challenge(ctx, opponent: discord.Member = None):
         )
 
     if not has_valid_lineup(challenger_id):
-        await ctx.send(f"⚠️ {ctx.author.display_name}, you don't have a valid lineup set. Use `!setlineup` first.")
+        await ctx.send(f"âš ï¸ {ctx.author.display_name}, you don't have a valid lineup set. Use `!setlineup` first.")
         return
     if not has_valid_lineup(opponent_id):
-        await ctx.send(f"⚠️ {opponent.display_name} doesn't have a valid lineup set. They must set a lineup with `!setlineup`.")
+        await ctx.send(f"âš ï¸ {opponent.display_name} doesn't have a valid lineup set. They must set a lineup with `!setlineup`.")
         return
 
     # helper to build member-like object needed by simulate_match display
@@ -2997,11 +2997,11 @@ async def challenge(ctx, opponent: discord.Member = None):
     try:
         sim = simulate_match(challenger_id, opponent_id, member1, member2)
     except Exception as e:
-        await ctx.send(f"⚠️ Error running match simulation: {e}")
+        await ctx.send(f"âš ï¸ Error running match simulation: {e}")
         return
 
     if not sim:
-        await ctx.send("⚠️ Match could not be simulated.")
+        await ctx.send("âš ï¸ Match could not be simulated.")
         return
 
     # expected: ( (goals_a, goals_b), narrative, scores )
@@ -3022,19 +3022,19 @@ async def challenge(ctx, opponent: discord.Member = None):
             narrative = sim[1] if len(sim) > 1 else ""
             scores = sim[2] if len(sim) > 2 else None
         except Exception:
-            await ctx.send("⚠️ Simulation returned unexpected format; cannot parse result.")
+            await ctx.send("âš ï¸ Simulation returned unexpected format; cannot parse result.")
             return
 
     a_goals, b_goals = int(scoreline[0]), int(scoreline[1])
 
     # create rich embed
     session_label = f" (session {session_id})" if session_id else ""
-    title = f"⚔️ KoTH{session_label} — {ctx.author.display_name} vs {opponent.display_name}"
+    title = f"âš”ï¸ KoTH{session_label} â€” {ctx.author.display_name} vs {opponent.display_name}"
     embed = discord.Embed(title=title, color=discord.Color.blurple())
     embed.add_field(name="Score", value=f"**{a_goals} - {b_goals}**", inline=False)
     if narrative:
         # truncate if too long
-        summary = narrative if len(narrative) <= 1000 else (narrative[:980] + "…")
+        summary = narrative if len(narrative) <= 1000 else (narrative[:980] + "â€¦")
         embed.add_field(name="Match Summary", value=summary, inline=False)
 
     # determine winner
@@ -3050,21 +3050,21 @@ async def challenge(ctx, opponent: discord.Member = None):
         if winner:
             target["king"] = winner
             target["streak"] = 1
-            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> wins the first battle! 🏆 Streak: 1"
+            result_msg = f"ðŸ‘‘ | **A New King is Crowned!** <@{winner}> wins the first battle! ðŸ† Streak: 1"
         else:
-            result_msg = "🤝 It's a draw — no King yet."
+            result_msg = "ðŸ¤ It's a draw â€” no King yet."
     else:
         current_king = target.get("king")
         if winner is None:
-            result_msg = "🤝 It's a draw! No change to the throne."
+            result_msg = "ðŸ¤ It's a draw! No change to the throne."
         elif winner == current_king:
             target["streak"] = target.get("streak", 0) + 1
-            result_msg = f"👑 | **The King Defends the Throne!** <@{winner}> wins again! 🔥 Streak: {target['streak']}"
+            result_msg = f"ðŸ‘‘ | **The King Defends the Throne!** <@{winner}> wins again! ðŸ”¥ Streak: {target['streak']}"
         else:
             prev = current_king
             target["king"] = winner
             target["streak"] = 1
-            result_msg = f"👑 | **A New King is Crowned!** <@{winner}> dethrones <@{prev}>! 🏆 Streak: 1"
+            result_msg = f"ðŸ‘‘ | **A New King is Crowned!** <@{winner}> dethrones <@{prev}>! ðŸ† Streak: 1"
 
     # persist
     try:
@@ -3074,7 +3074,7 @@ async def challenge(ctx, opponent: discord.Member = None):
             _save_json(KOTH_AUCTION_FILE, koth_auction)
     except Exception as e:
         # saving failed but state updated in memory; warn
-        await ctx.send(f"⚠️ Warning: could not save KoTH state: {e}")
+        await ctx.send(f"âš ï¸ Warning: could not save KoTH state: {e}")
 
     # send embed + result
     await ctx.send(embed=embed)
@@ -3090,7 +3090,7 @@ async def kingstatus(ctx):
     if chan in koth_draft and koth_draft[chan].get("active"):
         s = koth_draft[chan]
         if s.get("king"):
-            await ctx.send(f"👑 Current Draft KoTH King: <@{s['king']}> | 🔥 Streak: {s.get('streak', 0)}")
+            await ctx.send(f"ðŸ‘‘ Current Draft KoTH King: <@{s['king']}> | ðŸ”¥ Streak: {s.get('streak', 0)}")
         else:
             await ctx.send("No Draft KoTH King yet. Add players and challenge!")
         return
@@ -3104,8 +3104,8 @@ async def kingstatus(ctx):
 
     lines = []
     for sid, s in active.items():
-        king = f"<@{s['king']}>" if s.get("king") else "— No King yet —"
-        lines.append(f"• ID `{sid}` — King: {king} — Streak: {s.get('streak', 0)} — Players: {len(s.get('players', []))}")
+        king = f"<@{s['king']}>" if s.get("king") else "â€” No King yet â€”"
+        lines.append(f"â€¢ ID `{sid}` â€” King: {king} â€” Streak: {s.get('streak', 0)} â€” Players: {len(s.get('players', []))}")
 
     # chunk message if very long
     msg = "\n".join(lines)
@@ -3133,8 +3133,8 @@ async def kothleaderboard(ctx):
         return
 
     items = sorted(boards.items(), key=lambda x: x[1], reverse=True)[:10]
-    desc = "\n".join([f"{i+1}. <@{uid}> — {streak} defenses" for i, (uid, streak) in enumerate(items)])
-    embed = discord.Embed(title="🏆 KoTH Leaderboard", description=desc, color=discord.Color.gold())
+    desc = "\n".join([f"{i+1}. <@{uid}> â€” {streak} defenses" for i, (uid, streak) in enumerate(items)])
+    embed = discord.Embed(title="ðŸ† KoTH Leaderboard", description=desc, color=discord.Color.gold())
     await ctx.send(embed=embed)
 
 
@@ -3147,21 +3147,21 @@ async def koth_list(ctx, mode: str = None):
         # filter only active sessions
         active = {sid: ses for sid, ses in (sessions.items() if sessions else []) if ses.get("active")}
         if not active:
-            await ctx.send("⚠️ No active Auction KoTH sessions in this channel.")
+            await ctx.send("âš ï¸ No active Auction KoTH sessions in this channel.")
             return
         lines = []
         for sid, s in active.items():
             king = f"<@{s['king']}>" if s.get("king") else "No King yet"
-            lines.append(f"• `{sid}` — King: {king} — Streak: {s.get('streak', 0)} — Players: {len(s.get('players', []))}")
+            lines.append(f"â€¢ `{sid}` â€” King: {king} â€” Streak: {s.get('streak', 0)} â€” Players: {len(s.get('players', []))}")
         await ctx.send("**Active Auction KoTH sessions:**\n" + "\n".join(lines))
         return
     elif mode == "draftclash":
         s = koth_draft.get(chan)
         if not s or not s.get("active"):
-            await ctx.send("⚠️ No active Draft Clash KoTH session in this channel.")
+            await ctx.send("âš ï¸ No active Draft Clash KoTH session in this channel.")
             return
         king = f"<@{s['king']}>" if s.get("king") else "No King yet"
-        await ctx.send(f"**Draft Clash KoTH:** ID `{s.get('id')}` — King: {king} — Streak: {s.get('streak', 0)} — Players: {len(s.get('players', []))}")
+        await ctx.send(f"**Draft Clash KoTH:** ID `{s.get('id')}` â€” King: {king} â€” Streak: {s.get('streak', 0)} â€” Players: {len(s.get('players', []))}")
         return
     else:
         await ctx.send("Usage: `!koth_list auction` or `!koth_list draftclash`")
@@ -3185,7 +3185,7 @@ async def koth_lineup(ctx):
     lineup_setup_state['tactic'] = None
 
     embed = discord.Embed(
-        title="🎯 Select Formation for KoTH",
+        title="ðŸŽ¯ Select Formation for KoTH",
         description="Choose a formation for your KoTH lineup (using your drafted players):",
         color=discord.Color.blue())
     embed.add_field(name="Available Formations",
@@ -3202,7 +3202,7 @@ async def viewteam(ctx):
         await ctx.send("You don't have a Draft Clash team yet.")
         return
     lineup = user_lineups[user_id]['draft']
-    embed = discord.Embed(title=f"⚡ {ctx.author.display_name}'s Draft Clash Team", color=discord.Color.green())
+    embed = discord.Embed(title=f"âš¡ {ctx.author.display_name}'s Draft Clash Team", color=discord.Color.green())
     embed.add_field(name="Formation", value=lineup.get('formation', '4-4-2'), inline=True)
     embed.add_field(name="Tactic", value=lineup.get('tactic', 'Balanced'), inline=True)
     embed.add_field(name="Players", value="\n".join([f"{p['name']} ({p['position'].upper()})" for p in lineup['players']]), inline=False)
