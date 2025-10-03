@@ -1955,6 +1955,299 @@ async def pick(ctx, *, player_name):
     await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
 
 
+# -------------------- Who Am I? Game Mode --------------------
+whoami_sessions = {}
+
+@bot.command()
+async def whoami(ctx, action: str = None):
+    """Start a 'Who Am I?' guessing game.
+    Usage: !whoami start <set_key> - Host starts the game
+           !whoami join - Players join the lobby
+           !whoami begin - Host begins after players join
+           !whoami reveal - Reveal your assigned player
+           !whoami end - End the game
+    """
+    ch = ctx.channel.id
+    
+    if action is None:
+        await ctx.send(
+            "**Who Am I? Game Mode**\n"
+            "Commands:\n"
+            "`!whoami start <set>` - Start a new game (e.g., !whoami start 24-25)\n"
+            "`!whoami join` - Join the game lobby\n"
+            "`!whoami begin` - Begin the game (host only)\n"
+            "`!whoami reveal` - Reveal your player identity\n"
+            "`!whoami end` - End the game\n\n"
+            "**How to Play:**\n"
+            "Each player gets assigned a footballer. Everyone else knows who you are except YOU!\n"
+            "Ask yes/no questions to figure out your identity. First to guess wins!"
+        )
+        return
+    
+    action = action.lower()
+    
+    if action == "start":
+        if ch in whoami_sessions and whoami_sessions[ch].get('state') in ['lobby', 'playing']:
+            await ctx.send("A Who Am I game is already active in this channel. Use `!whoami end` to end it first.")
+            return
+        
+        # Parse set key from command
+        parts = ctx.message.content.split()
+        set_key = parts[2].lower() if len(parts) > 2 else '24-25'
+        
+        if set_key not in available_sets:
+            await ctx.send(f"Invalid set key. Available sets: {', '.join(available_sets.keys())}")
+            return
+        
+        whoami_sessions[ch] = {
+            'host': str(ctx.author.id),
+            'players': [str(ctx.author.id)],
+            'state': 'lobby',
+            'set_key': set_key,
+            'assignments': {},  # {user_id: player_dict}
+            'revealed': set()  # users who revealed their identity
+        }
+        
+        embed = discord.Embed(
+            title="🎭 Who Am I? - Lobby Open",
+            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with ✅ to join!",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text="Host uses !whoami begin to start the game")
+        
+        join_msg = await ctx.send(embed=embed)
+        await join_msg.add_reaction("✅")
+        
+        def check(reaction, user):
+            return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
+        
+        async def wait_for_joins():
+            while whoami_sessions.get(ch, {}).get('state') == 'lobby':
+                try:
+                    reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
+                    uid = str(user.id)
+                    if uid not in whoami_sessions[ch]['players']:
+                        whoami_sessions[ch]['players'].append(uid)
+                        await ctx.send(f"{user.mention} joined the game! Total players: {len(whoami_sessions[ch]['players'])}")
+                except asyncio.TimeoutError:
+                    break
+        
+        bot.loop.create_task(wait_for_joins())
+        return
+    
+    elif action == "join":
+        if ch not in whoami_sessions or whoami_sessions[ch].get('state') != 'lobby':
+            await ctx.send("No Who Am I lobby is open. Host must use `!whoami start <set>` first.")
+            return
+        
+        uid = str(ctx.author.id)
+        if uid in whoami_sessions[ch]['players']:
+            await ctx.send("You've already joined!")
+            return
+        
+        whoami_sessions[ch]['players'].append(uid)
+        await ctx.send(f"{ctx.author.mention} joined! Total players: {len(whoami_sessions[ch]['players'])}")
+        return
+    
+    elif action == "begin":
+        if ch not in whoami_sessions or whoami_sessions[ch].get('state') != 'lobby':
+            await ctx.send("No lobby to begin. Use `!whoami start <set>` first.")
+            return
+        
+        session = whoami_sessions[ch]
+        if str(ctx.author.id) != session['host']:
+            await ctx.send("Only the host can begin the game.")
+            return
+        
+        if len(session['players']) < 2:
+            await ctx.send("Need at least 2 players to start!")
+            return
+        
+        if len(session['players']) > 10:
+            await ctx.send("Maximum 10 players allowed!")
+            return
+        
+        # Collect all players from the chosen set
+        all_players = []
+        for pos in available_positions:
+            tiered_players = load_players_by_position(pos, session['set_key'])
+            for tier in ['A', 'B', 'C']:
+                all_players.extend(tiered_players[tier])
+        
+        if len(all_players) < len(session['players']):
+            await ctx.send("Not enough players in this set for all participants!")
+            return
+        
+        # Randomly assign unique players to each participant
+        selected_players = random.sample(all_players, len(session['players']))
+        for i, uid in enumerate(session['players']):
+            session['assignments'][uid] = selected_players[i]
+        
+        session['state'] = 'playing'
+        
+        # Send DMs to each player with everyone's assignments EXCEPT their own
+        for uid in session['players']:
+            try:
+                user = await bot.fetch_user(int(uid))
+                embed = discord.Embed(
+                    title="🎭 Who Am I? - Game Started!",
+                    description="**Your mission:** Figure out which player YOU are!\n\nHere's what everyone else got:",
+                    color=discord.Color.blue()
+                )
+                
+                for other_uid in session['players']:
+                    if other_uid != uid:
+                        other_user = await bot.fetch_user(int(other_uid))
+                        player_info = session['assignments'][other_uid]
+                        embed.add_field(
+                            name=f"{other_user.display_name}",
+                            value=f"**{player_info['name']}** ({player_info.get('position', 'Unknown').upper()})",
+                            inline=False
+                        )
+                
+                embed.add_field(
+                    name="🤔 Your Player",
+                    value="**??? - THIS IS WHAT YOU NEED TO GUESS!**",
+                    inline=False
+                )
+                embed.set_footer(text="Ask yes/no questions in the channel to figure out your identity!\nUse !whoami reveal when you think you know!")
+                
+                await user.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send(f"⚠️ Couldn't DM {user.display_name}. Make sure DMs are enabled!")
+            except Exception as e:
+                print(f"Error sending DM to {uid}: {e}")
+        
+        # Announce in channel
+        announce_embed = discord.Embed(
+            title="🎭 Who Am I? - Game Started!",
+            description=f"**{len(session['players'])} players** are in the game!\n\n"
+                       f"**Set:** {available_sets[session['set_key']]}\n\n"
+                       "Each player has been assigned a footballer. Check your DMs to see everyone else's players!\n\n"
+                       "**Rules:**\n"
+                       "• Ask yes/no questions to figure out YOUR player\n"
+                       "• You can see everyone else's players but not your own\n"
+                       "• Use `!whoami reveal` when you think you know!\n"
+                       "• First to guess correctly wins!",
+            color=discord.Color.gold()
+        )
+        await ctx.send(embed=announce_embed)
+        return
+    
+    elif action == "reveal":
+        if ch not in whoami_sessions or whoami_sessions[ch].get('state') != 'playing':
+            await ctx.send("No active Who Am I game in this channel.")
+            return
+        
+        session = whoami_sessions[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in session['assignments']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        if uid in session['revealed']:
+            await ctx.send("You've already revealed your player!")
+            return
+        
+        # Reveal their player
+        player = session['assignments'][uid]
+        session['revealed'].add(uid)
+        
+        embed = discord.Embed(
+            title="🎭 Player Revealed!",
+            description=f"{ctx.author.mention}'s player was:",
+            color=discord.Color.purple()
+        )
+        embed.add_field(
+            name=player['name'],
+            value=f"**Position:** {player.get('position', 'Unknown').upper()}\n"
+                  f"**League:** {player.get('league', 'Unknown')}\n"
+                  f"**Tier:** {player.get('tier', 'C')}",
+            inline=False
+        )
+        
+        if len(session['revealed']) == len(session['players']):
+            embed.add_field(
+                name="🏆 Game Over!",
+                value="All players have been revealed!",
+                inline=False
+            )
+            session['state'] = 'finished'
+        
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "end":
+        if ch not in whoami_sessions:
+            await ctx.send("No Who Am I game in this channel.")
+            return
+        
+        session = whoami_sessions[ch]
+        if str(ctx.author.id) != session['host'] and ctx.author.id != PRIVILEGED_USER_ID:
+            await ctx.send("Only the host can end the game.")
+            return
+        
+        del whoami_sessions[ch]
+        await ctx.send("🎭 Who Am I game has been ended.")
+        return
+    
+    else:
+        await ctx.send("Unknown action. Use: start, join, begin, reveal, or end")
+
+
+@bot.command()
+async def guess(ctx, *, player_name: str):
+    """Make a guess for your Who Am I player.
+    Usage: !guess <player name>
+    """
+    ch = ctx.channel.id
+    
+    if ch not in whoami_sessions or whoami_sessions[ch].get('state') != 'playing':
+        await ctx.send("No active Who Am I game in this channel.")
+        return
+    
+    session = whoami_sessions[ch]
+    uid = str(ctx.author.id)
+    
+    if uid not in session['assignments']:
+        await ctx.send("You're not in this game!")
+        return
+    
+    if uid in session['revealed']:
+        await ctx.send("You've already revealed your player!")
+        return
+    
+    # Check if guess is correct
+    actual_player = session['assignments'][uid]
+    
+    if player_name.lower().strip() == actual_player['name'].lower().strip():
+        session['revealed'].add(uid)
+        
+        embed = discord.Embed(
+            title="🏆 CORRECT GUESS!",
+            description=f"{ctx.author.mention} guessed correctly!",
+            color=discord.Color.green()
+        )
+        embed.add_field(
+            name="Their Player",
+            value=f"**{actual_player['name']}** ({actual_player.get('position', 'Unknown').upper()})",
+            inline=False
+        )
+        
+        if len(session['revealed']) == len(session['players']):
+            embed.add_field(
+                name="🎮 Game Over!",
+                value="All players have been revealed!",
+                inline=False
+            )
+            session['state'] = 'finished'
+        
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send(f"❌ Wrong! **{player_name}** is not your player. Keep guessing!")
+
+
 keep_alive()
 
 # Start the bot
