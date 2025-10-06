@@ -2559,14 +2559,13 @@ async def vote(ctx, target: discord.Member = None):
             else:
                 # Wrong person ejected
                 embed = discord.Embed(
-                    title="❌ Wrong Person Ejected!",
+                    title="❌ Player Ejected!",
                     description=f"{ejected_user.mention} was ejected with {max_votes} votes.",
                     color=discord.Color.orange()
                 )
                 embed.add_field(
                     name="Result",
-                    value=f"**{ejected_user.display_name} was NOT the impostor!**\n"
-                          f"Their Player: **{session['crewmate_player']['name']}**\n\n"
+                    value=f"**{ejected_user.display_name} was NOT the impostor!**\n\n"
                           f"The impostor is still among you! Continue voting.",
                     inline=False
                 )
