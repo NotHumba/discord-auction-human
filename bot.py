@@ -2248,6 +2248,354 @@ async def guess(ctx, *, player_name: str):
         await ctx.send(f"❌ Wrong! **{player_name}** is not your player. Keep guessing!")
 
 
+# -------------------- Among Us Game Mode --------------------
+amongus_sessions = {}
+
+@bot.command()
+async def amongus(ctx, action: str = None):
+    """Start an Among Us style impostor game.
+    Usage: !amongus start <set_key> - Host starts the game
+           !amongus join - Players join the lobby
+           !amongus begin - Host begins after players join
+           !amongus end - End the game
+    """
+    ch = ctx.channel.id
+    
+    if action is None:
+        await ctx.send(
+            "**Among Us - Impostor Game Mode**\n"
+            "Commands:\n"
+            "`!amongus start <set>` - Start a new game (e.g., !amongus start 24-25)\n"
+            "`!amongus join` - Join the game lobby\n"
+            "`!amongus begin` - Begin the game (host only)\n"
+            "`!vote @player` - Vote to eject a player\n"
+            "`!amongus end` - End the game\n\n"
+            "**How to Play:**\n"
+            "Everyone gets the same footballer EXCEPT one impostor who gets a different one!\n"
+            "Discuss and vote to find the impostor. Majority vote ejects a player!"
+        )
+        return
+    
+    action = action.lower()
+    
+    if action == "start":
+        if ch in amongus_sessions and amongus_sessions[ch].get('state') in ['lobby', 'playing']:
+            await ctx.send("An Among Us game is already active in this channel. Use `!amongus end` to end it first.")
+            return
+        
+        # Parse set key from command
+        parts = ctx.message.content.split()
+        set_key = parts[2].lower() if len(parts) > 2 else '24-25'
+        
+        if set_key not in available_sets:
+            await ctx.send(f"Invalid set key. Available sets: {', '.join(available_sets.keys())}")
+            return
+        
+        amongus_sessions[ch] = {
+            'host': str(ctx.author.id),
+            'players': [str(ctx.author.id)],
+            'state': 'lobby',
+            'set_key': set_key,
+            'impostor': None,
+            'crewmate_player': None,
+            'impostor_player': None,
+            'votes': {},  # {voter_id: voted_for_id}
+            'ejected': []
+        }
+        
+        embed = discord.Embed(
+            title="🔴 Among Us - Lobby Open",
+            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with ✅ to join!",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Host uses !amongus begin to start the game")
+        
+        join_msg = await ctx.send(embed=embed)
+        await join_msg.add_reaction("✅")
+        
+        def check(reaction, user):
+            return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
+        
+        async def wait_for_joins():
+            while amongus_sessions.get(ch, {}).get('state') == 'lobby':
+                try:
+                    reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
+                    uid = str(user.id)
+                    if uid not in amongus_sessions[ch]['players']:
+                        amongus_sessions[ch]['players'].append(uid)
+                        await ctx.send(f"{user.mention} joined the game! Total players: {len(amongus_sessions[ch]['players'])}")
+                except asyncio.TimeoutError:
+                    break
+        
+        bot.loop.create_task(wait_for_joins())
+        return
+    
+    elif action == "join":
+        if ch not in amongus_sessions or amongus_sessions[ch].get('state') != 'lobby':
+            await ctx.send("No Among Us lobby is open. Host must use `!amongus start <set>` first.")
+            return
+        
+        uid = str(ctx.author.id)
+        if uid in amongus_sessions[ch]['players']:
+            await ctx.send("You've already joined!")
+            return
+        
+        amongus_sessions[ch]['players'].append(uid)
+        await ctx.send(f"{ctx.author.mention} joined! Total players: {len(amongus_sessions[ch]['players'])}")
+        return
+    
+    elif action == "begin":
+        if ch not in amongus_sessions or amongus_sessions[ch].get('state') != 'lobby':
+            await ctx.send("No lobby to begin. Use `!amongus start <set>` first.")
+            return
+        
+        session = amongus_sessions[ch]
+        if str(ctx.author.id) != session['host']:
+            await ctx.send("Only the host can begin the game.")
+            return
+        
+        if len(session['players']) < 3:
+            await ctx.send("Need at least 3 players to start!")
+            return
+        
+        if len(session['players']) > 10:
+            await ctx.send("Maximum 10 players allowed!")
+            return
+        
+        # Collect all players from the chosen set
+        all_players = []
+        for pos in available_positions:
+            tiered_players = load_players_by_position(pos, session['set_key'])
+            for tier in ['A', 'B', 'C']:
+                all_players.extend(tiered_players[tier])
+        
+        if len(all_players) < 2:
+            await ctx.send("Not enough players in this set!")
+            return
+        
+        # Select 2 random players: one for crewmates, one for impostor
+        selected_players = random.sample(all_players, 2)
+        session['crewmate_player'] = selected_players[0]
+        session['impostor_player'] = selected_players[1]
+        
+        # Randomly select impostor
+        session['impostor'] = random.choice(session['players'])
+        
+        session['state'] = 'playing'
+        
+        # Send DMs to each player
+        for uid in session['players']:
+            try:
+                user = await bot.fetch_user(int(uid))
+                
+                if uid == session['impostor']:
+                    # Impostor gets different player
+                    embed = discord.Embed(
+                        title="🔴 You are the IMPOSTOR!",
+                        description="Everyone else has a different player. Blend in and don't get caught!",
+                        color=discord.Color.red()
+                    )
+                    embed.add_field(
+                        name="Your Player",
+                        value=f"**{session['impostor_player']['name']}**\n"
+                              f"Position: {session['impostor_player'].get('position', 'Unknown').upper()}\n"
+                              f"League: {session['impostor_player'].get('league', 'Unknown')}",
+                        inline=False
+                    )
+                    embed.set_footer(text="Don't reveal your player! Vote others out to win!")
+                else:
+                    # Crewmates get the same player
+                    embed = discord.Embed(
+                        title="🔵 You are a CREWMATE!",
+                        description="You and other crewmates have the same player. Find the impostor!",
+                        color=discord.Color.blue()
+                    )
+                    embed.add_field(
+                        name="Your Player",
+                        value=f"**{session['crewmate_player']['name']}**\n"
+                              f"Position: {session['crewmate_player'].get('position', 'Unknown').upper()}\n"
+                              f"League: {session['crewmate_player'].get('league', 'Unknown')}",
+                        inline=False
+                    )
+                    embed.set_footer(text="Discuss with others and vote out the impostor!")
+                
+                await user.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send(f"⚠️ Couldn't DM {user.display_name}. Make sure DMs are enabled!")
+            except Exception as e:
+                print(f"Error sending DM to {uid}: {e}")
+        
+        # Announce in channel
+        announce_embed = discord.Embed(
+            title="🔴 Among Us - Game Started!",
+            description=f"**{len(session['players'])} players** are in the game!\n\n"
+                       f"**Set:** {available_sets[session['set_key']]}\n\n"
+                       "One player is the IMPOSTOR with a different footballer!\n"
+                       "Everyone else has the SAME player.\n\n"
+                       "**Rules:**\n"
+                       "• Discuss and figure out who has a different player\n"
+                       "• Use `!vote @player` to vote someone out\n"
+                       "• Majority vote ejects the player\n"
+                       "• Find the impostor to win!",
+            color=discord.Color.red()
+        )
+        announce_embed.add_field(
+            name="Players",
+            value=", ".join([f"<@{uid}>" for uid in session['players']]),
+            inline=False
+        )
+        await ctx.send(embed=announce_embed)
+        return
+    
+    elif action == "end":
+        if ch not in amongus_sessions:
+            await ctx.send("No Among Us game in this channel.")
+            return
+        
+        session = amongus_sessions[ch]
+        if str(ctx.author.id) != session['host'] and ctx.author.id != PRIVILEGED_USER_ID:
+            await ctx.send("Only the host can end the game.")
+            return
+        
+        del amongus_sessions[ch]
+        await ctx.send("🔴 Among Us game has been ended.")
+        return
+    
+    else:
+        await ctx.send("Unknown action. Use: start, join, begin, or end")
+
+
+@bot.command()
+async def vote(ctx, target: discord.Member = None):
+    """Vote to eject a player in Among Us game.
+    Usage: !vote @player
+    """
+    ch = ctx.channel.id
+    
+    if ch not in amongus_sessions or amongus_sessions[ch].get('state') != 'playing':
+        await ctx.send("No active Among Us game in this channel.")
+        return
+    
+    if target is None:
+        await ctx.send("You must mention a player to vote! Usage: `!vote @player`")
+        return
+    
+    session = amongus_sessions[ch]
+    voter_id = str(ctx.author.id)
+    target_id = str(target.id)
+    
+    if voter_id not in session['players']:
+        await ctx.send("You're not in this game!")
+        return
+    
+    if voter_id in session['ejected']:
+        await ctx.send("You've been ejected and cannot vote!")
+        return
+    
+    if target_id not in session['players']:
+        await ctx.send("That player is not in the game!")
+        return
+    
+    if target_id in session['ejected']:
+        await ctx.send("That player has already been ejected!")
+        return
+    
+    # Record vote
+    session['votes'][voter_id] = target_id
+    await ctx.send(f"✅ {ctx.author.mention} voted for {target.mention}")
+    
+    # Count active players (not ejected)
+    active_players = [p for p in session['players'] if p not in session['ejected']]
+    
+    # Check if all active players have voted
+    active_voters = [v for v in session['votes'].keys() if v in active_players]
+    
+    if len(active_voters) >= len(active_players):
+        # Tally votes
+        vote_counts = {}
+        for voted_for in session['votes'].values():
+            if voted_for in active_players:
+                vote_counts[voted_for] = vote_counts.get(voted_for, 0) + 1
+        
+        if not vote_counts:
+            await ctx.send("No valid votes cast. Voting reset.")
+            session['votes'].clear()
+            return
+        
+        # Find player(s) with most votes
+        max_votes = max(vote_counts.values())
+        top_voted = [uid for uid, count in vote_counts.items() if count == max_votes]
+        
+        if len(top_voted) > 1:
+            # Tie - no ejection
+            await ctx.send(f"🤝 Tie vote! No one was ejected. Players with {max_votes} votes: {', '.join([f'<@{uid}>' for uid in top_voted])}")
+            session['votes'].clear()
+            return
+        
+        # Eject the player with most votes
+        ejected_id = top_voted[0]
+        session['ejected'].append(ejected_id)
+        session['votes'].clear()
+        
+        try:
+            ejected_user = await bot.fetch_user(int(ejected_id))
+            
+            # Check if they were the impostor
+            if ejected_id == session['impostor']:
+                # Crewmates win!
+                embed = discord.Embed(
+                    title="🎉 CREWMATES WIN!",
+                    description=f"{ejected_user.mention} was ejected with {max_votes} votes.",
+                    color=discord.Color.green()
+                )
+                embed.add_field(
+                    name="Result",
+                    value=f"**{ejected_user.display_name} WAS the impostor!**\n"
+                          f"Impostor's Player: **{session['impostor_player']['name']}**\n"
+                          f"Crewmate's Player: **{session['crewmate_player']['name']}**",
+                    inline=False
+                )
+                session['state'] = 'finished'
+            else:
+                # Wrong person ejected
+                embed = discord.Embed(
+                    title="❌ Wrong Person Ejected!",
+                    description=f"{ejected_user.mention} was ejected with {max_votes} votes.",
+                    color=discord.Color.orange()
+                )
+                embed.add_field(
+                    name="Result",
+                    value=f"**{ejected_user.display_name} was NOT the impostor!**\n"
+                          f"Their Player: **{session['crewmate_player']['name']}**\n\n"
+                          f"The impostor is still among you! Continue voting.",
+                    inline=False
+                )
+                
+                # Check if impostor wins (only 2 or fewer active players left)
+                remaining_active = [p for p in session['players'] if p not in session['ejected']]
+                if len(remaining_active) <= 2:
+                    impostor_user = await bot.fetch_user(int(session['impostor']))
+                    embed = discord.Embed(
+                        title="🔴 IMPOSTOR WINS!",
+                        description="Not enough players left to vote out the impostor!",
+                        color=discord.Color.red()
+                    )
+                    embed.add_field(
+                        name="Result",
+                        value=f"**{impostor_user.display_name} was the impostor!**\n"
+                              f"Impostor's Player: **{session['impostor_player']['name']}**\n"
+                              f"Crewmate's Player: **{session['crewmate_player']['name']}**",
+                        inline=False
+                    )
+                    session['state'] = 'finished'
+            
+            await ctx.send(embed=embed)
+            
+        except Exception as e:
+            print(f"Error processing ejection: {e}")
+            await ctx.send(f"<@{ejected_id}> was ejected with {max_votes} votes!")
+
+
 keep_alive()
 
 # Start the bot
