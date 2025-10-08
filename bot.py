@@ -2595,6 +2595,573 @@ async def vote(ctx, target: discord.Member = None):
             await ctx.send(f"<@{ejected_id}> was ejected with {max_votes} votes!")
 
 
+# -------------------- Football Monopoly Game Mode --------------------
+monopoly_sessions = {}
+
+class MonopolyPlayer:
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.balance = 15000000  # 15M starting money
+        self.position = 0  # Board position (0-39)
+        self.owned_players = []  # List of player indices they own
+        self.in_jail = False
+        self.jail_turns = 0
+        self.bankrupt = False
+
+class MonopolyProperty:
+    def __init__(self, name, price, rent, position_type='player'):
+        self.name = name
+        self.price = price
+        self.rent = rent
+        self.owner = None
+        self.position_type = position_type  # 'player', 'transfer', 'injury', 'corner'
+
+def create_monopoly_board(set_key):
+    """Creates a Monopoly-style board with footballers and special spaces."""
+    board = []
+    
+    # Load players from set
+    all_players = []
+    for pos in available_positions:
+        tiered_players = load_players_by_position(pos, set_key)
+        for tier in ['A', 'B', 'C']:
+            all_players.extend(tiered_players[tier])
+    
+    if len(all_players) < 28:
+        return None
+    
+    # Shuffle and pick players for the board
+    random.shuffle(all_players)
+    selected_players = all_players[:28]
+    
+    # Create board (40 spaces like Monopoly)
+    board_layout = [
+        {'type': 'corner', 'name': 'START (Collect $2M)', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 0},
+        {'type': 'transfer', 'name': 'Transfer Window', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 1},
+        {'type': 'player', 'idx': 2},
+        {'type': 'injury', 'name': 'Injury (Pay $500K)', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 3},
+        {'type': 'player', 'idx': 4},
+        {'type': 'player', 'idx': 5},
+        {'type': 'player', 'idx': 6},
+        {'type': 'corner', 'name': 'JUST VISITING', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 7},
+        {'type': 'player', 'idx': 8},
+        {'type': 'transfer', 'name': 'Transfer Window', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 9},
+        {'type': 'player', 'idx': 10},
+        {'type': 'injury', 'name': 'Injury (Pay $500K)', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 11},
+        {'type': 'player', 'idx': 12},
+        {'type': 'player', 'idx': 13},
+        {'type': 'corner', 'name': 'FREE PARKING', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 14},
+        {'type': 'player', 'idx': 15},
+        {'type': 'transfer', 'name': 'Transfer Window', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 16},
+        {'type': 'player', 'idx': 17},
+        {'type': 'injury', 'name': 'Injury (Pay $500K)', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 18},
+        {'type': 'player', 'idx': 19},
+        {'type': 'player', 'idx': 20},
+        {'type': 'corner', 'name': 'GO TO JAIL (Red Card!)', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 21},
+        {'type': 'player', 'idx': 22},
+        {'type': 'transfer', 'name': 'Transfer Window', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 23},
+        {'type': 'player', 'idx': 24},
+        {'type': 'injury', 'name': 'Injury (Pay $500K)', 'price': 0, 'rent': 0},
+        {'type': 'player', 'idx': 25},
+        {'type': 'player', 'idx': 26},
+        {'type': 'player', 'idx': 27},
+    ]
+    
+    # Create property objects
+    for space in board_layout:
+        if space['type'] == 'player':
+            player = selected_players[space['idx']]
+            tier = player.get('tier', 'C')
+            # Price based on tier
+            if tier == 'A':
+                price = random.randint(8, 12) * 1000000
+                rent = random.randint(1, 2) * 1000000
+            elif tier == 'B':
+                price = random.randint(4, 7) * 1000000
+                rent = random.randint(500, 1000) * 1000
+            else:
+                price = random.randint(1, 3) * 1000000
+                rent = random.randint(200, 500) * 1000
+            
+            board.append(MonopolyProperty(
+                f"{player['name']} ({player.get('position', '?').upper()})",
+                price,
+                rent,
+                'player'
+            ))
+        else:
+            board.append(MonopolyProperty(
+                space['name'],
+                space['price'],
+                space['rent'],
+                space['type']
+            ))
+    
+    return board
+
+@bot.command()
+async def monopoly(ctx, action: str = None):
+    """Start a Football Monopoly game.
+    Usage: !monopoly start <set_key> - Host starts the game
+           !monopoly join - Players join the lobby
+           !monopoly begin - Host begins the game
+           !monopoly roll - Roll dice and move
+           !monopoly buy - Buy the player you landed on
+           !monopoly status - Show game status
+           !monopoly board - Show the board
+           !monopoly end - End the game
+    """
+    ch = ctx.channel.id
+    
+    if action is None:
+        await ctx.send(
+            "**⚽ Football Monopoly**\n"
+            "Commands:\n"
+            "`!monopoly start <set>` - Start a new game\n"
+            "`!monopoly join` - Join the lobby\n"
+            "`!monopoly begin` - Begin the game (host only)\n"
+            "`!monopoly roll` - Roll dice and move\n"
+            "`!monopoly buy` - Buy current player\n"
+            "`!monopoly status` - View game status\n"
+            "`!monopoly board` - View the board\n"
+            "`!monopoly end` - End the game\n\n"
+            "**How to Play:**\n"
+            "Like Monopoly but with footballers! Buy players, collect rent, bankrupt opponents!"
+        )
+        return
+    
+    action = action.lower()
+    
+    if action == "start":
+        if ch in monopoly_sessions and monopoly_sessions[ch].get('state') in ['lobby', 'playing']:
+            await ctx.send("A Monopoly game is already active. Use `!monopoly end` first.")
+            return
+        
+        parts = ctx.message.content.split()
+        set_key = parts[2].lower() if len(parts) > 2 else '24-25'
+        
+        if set_key not in available_sets:
+            await ctx.send(f"Invalid set. Available: {', '.join(available_sets.keys())}")
+            return
+        
+        monopoly_sessions[ch] = {
+            'host': str(ctx.author.id),
+            'players': {},  # {user_id: MonopolyPlayer}
+            'state': 'lobby',
+            'set_key': set_key,
+            'board': None,
+            'turn_order': [],
+            'current_turn': 0,
+            'pot': 0  # Free parking pot
+        }
+        
+        # Host auto-joins
+        monopoly_sessions[ch]['players'][str(ctx.author.id)] = MonopolyPlayer(str(ctx.author.id))
+        
+        embed = discord.Embed(
+            title="⚽ Football Monopoly - Lobby",
+            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with ✅ to join!",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text="Host uses !monopoly begin to start")
+        
+        join_msg = await ctx.send(embed=embed)
+        await join_msg.add_reaction("✅")
+        
+        def check(reaction, user):
+            return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
+        
+        async def wait_for_joins():
+            while monopoly_sessions.get(ch, {}).get('state') == 'lobby':
+                try:
+                    reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
+                    uid = str(user.id)
+                    if uid not in monopoly_sessions[ch]['players']:
+                        monopoly_sessions[ch]['players'][uid] = MonopolyPlayer(uid)
+                        await ctx.send(f"{user.mention} joined! Players: {len(monopoly_sessions[ch]['players'])}")
+                except asyncio.TimeoutError:
+                    break
+        
+        bot.loop.create_task(wait_for_joins())
+        return
+    
+    elif action == "join":
+        if ch not in monopoly_sessions or monopoly_sessions[ch].get('state') != 'lobby':
+            await ctx.send("No Monopoly lobby open.")
+            return
+        
+        uid = str(ctx.author.id)
+        if uid in monopoly_sessions[ch]['players']:
+            await ctx.send("You've already joined!")
+            return
+        
+        monopoly_sessions[ch]['players'][uid] = MonopolyPlayer(uid)
+        await ctx.send(f"{ctx.author.mention} joined! Players: {len(monopoly_sessions[ch]['players'])}")
+        return
+    
+    elif action == "begin":
+        if ch not in monopoly_sessions or monopoly_sessions[ch].get('state') != 'lobby':
+            await ctx.send("No lobby to begin.")
+            return
+        
+        session = monopoly_sessions[ch]
+        if str(ctx.author.id) != session['host']:
+            await ctx.send("Only the host can begin.")
+            return
+        
+        if len(session['players']) < 2:
+            await ctx.send("Need at least 2 players!")
+            return
+        
+        if len(session['players']) > 6:
+            await ctx.send("Maximum 6 players allowed!")
+            return
+        
+        # Create board
+        board = create_monopoly_board(session['set_key'])
+        if not board:
+            await ctx.send("Error creating board. Not enough players in set.")
+            return
+        
+        session['board'] = board
+        session['turn_order'] = list(session['players'].keys())
+        random.shuffle(session['turn_order'])
+        session['state'] = 'playing'
+        session['current_turn'] = 0
+        
+        embed = discord.Embed(
+            title="⚽ Football Monopoly - Game Started!",
+            description=f"**Set:** {available_sets[session['set_key']]}\n\n"
+                       f"**Players:** {len(session['players'])}\n"
+                       f"Starting balance: $15M each\n\n"
+                       f"**Turn Order:**\n" + 
+                       "\n".join([f"{i+1}. <@{uid}>" for i, uid in enumerate(session['turn_order'])]),
+            color=discord.Color.gold()
+        )
+        embed.add_field(
+            name="🎲 How to Play",
+            value="• `!monopoly roll` - Roll dice on your turn\n"
+                  "• `!monopoly buy` - Buy the player you landed on\n"
+                  "• Land on owned players = pay rent!\n"
+                  "• Pass START = collect $2M\n"
+                  "• Injury spaces = pay $500K\n"
+                  "• GO TO JAIL = miss 3 turns",
+            inline=False
+        )
+        
+        current_player_id = session['turn_order'][0]
+        embed.set_footer(text=f"Current turn: {await bot.fetch_user(int(current_player_id)).then(lambda u: u.display_name)}")
+        
+        await ctx.send(embed=embed)
+        
+        try:
+            current_user = await bot.fetch_user(int(current_player_id))
+            await ctx.send(f"🎲 {current_user.mention}, it's your turn! Use `!monopoly roll`")
+        except:
+            pass
+        
+        return
+    
+    elif action == "roll":
+        if ch not in monopoly_sessions or monopoly_sessions[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game.")
+            return
+        
+        session = monopoly_sessions[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in session['players']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        current_player_id = session['turn_order'][session['current_turn']]
+        if uid != current_player_id:
+            try:
+                current_user = await bot.fetch_user(int(current_player_id))
+                await ctx.send(f"It's not your turn! Current turn: {current_user.mention}")
+            except:
+                await ctx.send("It's not your turn!")
+            return
+        
+        player = session['players'][uid]
+        
+        if player.bankrupt:
+            await ctx.send("You're bankrupt!")
+            return
+        
+        # Check jail
+        if player.in_jail:
+            player.jail_turns += 1
+            if player.jail_turns >= 3:
+                player.in_jail = False
+                player.jail_turns = 0
+                await ctx.send(f"⚽ {ctx.author.mention} is released from jail!")
+            else:
+                await ctx.send(f"🔴 {ctx.author.mention} is in jail! ({3 - player.jail_turns} turns remaining)")
+                # Next turn
+                session['current_turn'] = (session['current_turn'] + 1) % len(session['turn_order'])
+                next_uid = session['turn_order'][session['current_turn']]
+                try:
+                    next_user = await bot.fetch_user(int(next_uid))
+                    await ctx.send(f"🎲 {next_user.mention}, it's your turn!")
+                except:
+                    pass
+                return
+        
+        # Roll dice
+        dice1 = random.randint(1, 6)
+        dice2 = random.randint(1, 6)
+        total = dice1 + dice2
+        
+        old_pos = player.position
+        player.position = (player.position + total) % 40
+        
+        # Check if passed START
+        if player.position < old_pos:
+            player.balance += 2000000
+            await ctx.send(f"💰 {ctx.author.mention} passed START! Collected $2M")
+        
+        # Get current space
+        space = session['board'][player.position]
+        
+        embed = discord.Embed(
+            title=f"🎲 {ctx.author.display_name} rolled {dice1} + {dice2} = {total}",
+            color=discord.Color.blue()
+        )
+        embed.add_field(
+            name="Landed on",
+            value=f"**{space.name}**",
+            inline=False
+        )
+        
+        # Handle different space types
+        if space.position_type == 'corner':
+            if 'START' in space.name:
+                embed.add_field(name="💰", value="Landed on START!", inline=False)
+            elif 'JAIL' in space.name:
+                player.in_jail = True
+                player.jail_turns = 0
+                player.position = 10  # Jail position
+                embed.add_field(name="🔴 RED CARD!", value="Sent to jail for 3 turns!", inline=False)
+            elif 'FREE PARKING' in space.name:
+                if session['pot'] > 0:
+                    player.balance += session['pot']
+                    embed.add_field(name="💰 JACKPOT!", value=f"Collected ${session['pot']:,} from pot!", inline=False)
+                    session['pot'] = 0
+                else:
+                    embed.add_field(name="🅿️", value="Nothing in the pot.", inline=False)
+        
+        elif space.position_type == 'injury':
+            penalty = 500000
+            player.balance -= penalty
+            session['pot'] += penalty
+            embed.add_field(name="🚑 Injury!", value=f"Paid $500K. Added to pot.", inline=False)
+        
+        elif space.position_type == 'transfer':
+            embed.add_field(name="📰 Transfer Window", value="Nothing happens. Safe space!", inline=False)
+        
+        elif space.position_type == 'player':
+            if space.owner is None:
+                embed.add_field(
+                    name="🏷️ For Sale",
+                    value=f"**Price:** ${space.price:,}\n**Rent:** ${space.rent:,}\n\nUse `!monopoly buy` to purchase!",
+                    inline=False
+                )
+            elif space.owner == uid:
+                embed.add_field(name="✅ Your Player", value="You own this player!", inline=False)
+            else:
+                # Pay rent
+                rent = space.rent
+                player.balance -= rent
+                session['players'][space.owner].balance += rent
+                
+                try:
+                    owner_user = await bot.fetch_user(int(space.owner))
+                    embed.add_field(
+                        name="💸 Rent Paid",
+                        value=f"Paid ${rent:,} to {owner_user.mention}",
+                        inline=False
+                    )
+                except:
+                    embed.add_field(name="💸 Rent Paid", value=f"Paid ${rent:,}", inline=False)
+        
+        embed.add_field(name="💰 Balance", value=f"${player.balance:,}", inline=True)
+        embed.add_field(name="📍 Position", value=f"{player.position}/40", inline=True)
+        
+        await ctx.send(embed=embed)
+        
+        # Check bankruptcy
+        if player.balance < 0:
+            player.bankrupt = True
+            await ctx.send(f"💔 {ctx.author.mention} is BANKRUPT!")
+            
+            # Transfer all properties to bank
+            for prop in session['board']:
+                if prop.owner == uid:
+                    prop.owner = None
+            
+            # Check if game over
+            active_players = [p for p in session['players'].values() if not p.bankrupt]
+            if len(active_players) == 1:
+                winner_id = [uid for uid, p in session['players'].items() if not p.bankrupt][0]
+                try:
+                    winner = await bot.fetch_user(int(winner_id))
+                    await ctx.send(f"🏆 **GAME OVER!** {winner.mention} wins Football Monopoly!")
+                except:
+                    await ctx.send(f"🏆 **GAME OVER!** <@{winner_id}> wins!")
+                session['state'] = 'finished'
+                return
+        
+        # Next turn
+        session['current_turn'] = (session['current_turn'] + 1) % len(session['turn_order'])
+        
+        # Skip bankrupt players
+        for _ in range(len(session['turn_order'])):
+            next_uid = session['turn_order'][session['current_turn']]
+            if not session['players'][next_uid].bankrupt:
+                break
+            session['current_turn'] = (session['current_turn'] + 1) % len(session['turn_order'])
+        
+        next_uid = session['turn_order'][session['current_turn']]
+        try:
+            next_user = await bot.fetch_user(int(next_uid))
+            await ctx.send(f"🎲 {next_user.mention}, it's your turn!")
+        except:
+            pass
+        
+        return
+    
+    elif action == "buy":
+        if ch not in monopoly_sessions or monopoly_sessions[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game.")
+            return
+        
+        session = monopoly_sessions[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in session['players']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        player = session['players'][uid]
+        space = session['board'][player.position]
+        
+        if space.position_type != 'player':
+            await ctx.send("You can't buy this space!")
+            return
+        
+        if space.owner is not None:
+            await ctx.send("This player is already owned!")
+            return
+        
+        if player.balance < space.price:
+            await ctx.send(f"Not enough money! Need ${space.price:,}, you have ${player.balance:,}")
+            return
+        
+        # Buy property
+        player.balance -= space.price
+        space.owner = uid
+        player.owned_players.append(player.position)
+        
+        await ctx.send(f"✅ {ctx.author.mention} bought **{space.name}** for ${space.price:,}! Balance: ${player.balance:,}")
+        return
+    
+    elif action == "status":
+        if ch not in monopoly_sessions:
+            await ctx.send("No Monopoly game in this channel.")
+            return
+        
+        session = monopoly_sessions[ch]
+        if session['state'] != 'playing':
+            await ctx.send("Game not started yet.")
+            return
+        
+        embed = discord.Embed(title="⚽ Football Monopoly - Status", color=discord.Color.blue())
+        
+        for uid in session['turn_order']:
+            player = session['players'][uid]
+            try:
+                user = await bot.fetch_user(int(uid))
+                status = "💔 BANKRUPT" if player.bankrupt else f"${player.balance:,}"
+                jail_status = " 🔴 IN JAIL" if player.in_jail else ""
+                embed.add_field(
+                    name=f"{user.display_name}{jail_status}",
+                    value=f"Balance: {status}\nPosition: {player.position}\nOwned: {len(player.owned_players)} players",
+                    inline=False
+                )
+            except:
+                pass
+        
+        embed.add_field(name="💰 Free Parking Pot", value=f"${session['pot']:,}", inline=False)
+        
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "board":
+        if ch not in monopoly_sessions or monopoly_sessions[ch].get('state') != 'playing':
+            await ctx.send("No active game.")
+            return
+        
+        session = monopoly_sessions[ch]
+        
+        embed = discord.Embed(title="⚽ Monopoly Board", color=discord.Color.green())
+        
+        board_text = []
+        for i, space in enumerate(session['board']):
+            if space.position_type == 'player':
+                owner_text = ""
+                if space.owner:
+                    try:
+                        owner = await bot.fetch_user(int(space.owner))
+                        owner_text = f" [Owned by {owner.display_name}]"
+                    except:
+                        owner_text = " [Owned]"
+                board_text.append(f"{i}. {space.name} - ${space.price:,}{owner_text}")
+            else:
+                board_text.append(f"{i}. {space.name}")
+        
+        # Split into chunks
+        chunk_size = 10
+        for i in range(0, len(board_text), chunk_size):
+            chunk = board_text[i:i+chunk_size]
+            embed.add_field(
+                name=f"Spaces {i}-{min(i+chunk_size-1, 39)}",
+                value="\n".join(chunk),
+                inline=False
+            )
+        
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "end":
+        if ch not in monopoly_sessions:
+            await ctx.send("No Monopoly game.")
+            return
+        
+        session = monopoly_sessions[ch]
+        if str(ctx.author.id) != session['host'] and ctx.author.id != PRIVILEGED_USER_ID:
+            await ctx.send("Only the host can end the game.")
+            return
+        
+        del monopoly_sessions[ch]
+        await ctx.send("⚽ Football Monopoly game ended.")
+        return
+    
+    else:
+        await ctx.send("Unknown action. Use: start, join, begin, roll, buy, status, board, or end")
+
+
 keep_alive()
 
 # Start the bot
