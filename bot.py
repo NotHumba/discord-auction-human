@@ -358,7 +358,7 @@ async def on_message(message):
 
             if all_positions_loaded_successfully:
                 embed = discord.Embed(
-                    title="âš½ Auction Started",
+                    title="⚽ Auction Started",
                     description=
                     f"**Set Selected:** {available_sets[set_key]}\n\nOnly the host or <@{PRIVILEGED_USER_ID}> can run position commands and !endauction.",
                     color=discord.Color.green())
@@ -367,7 +367,7 @@ async def on_message(message):
                 await message.channel.send(embed=embed)
             else:
                 embed = discord.Embed(
-                    title="âš ï¸ Set Loaded with Warnings",
+                    title="⚠️ Set Loaded with Warnings",
                     description=
                     f"**Set Selected:** {available_sets[set_key]}\n\nNo players available for positions: {', '.join(error_positions)}.",
                     color=discord.Color.orange())
@@ -376,7 +376,7 @@ async def on_message(message):
         else:
             print(f"DEBUG (on_message): Set key '{set_key}' NOT found.")
             embed = discord.Embed(
-                title="âŒ Invalid Set",
+                title="❌ Invalid Set",
                 description="Please choose from the available sets:",
                 color=discord.Color.red())
             set_list = "\n".join([
@@ -400,7 +400,7 @@ async def on_message(message):
                 lineup_setup_state['required_counts'] = available_formations[
                     formation]
                 lineup_setup_state['stage'] = 'tactic'
-                embed = discord.Embed(title="ðŸŽ¯ Select Tactic",
+                embed = discord.Embed(title="🎯 Select Tactic",
                                       description="Please choose a tactic:",
                                       color=discord.Color.blue())
                 embed.add_field(name="Available Tactics",
@@ -410,7 +410,7 @@ async def on_message(message):
                 await message.channel.send(embed=embed)
             else:
                 embed = discord.Embed(
-                    title="âŒ Invalid Formation",
+                    title="❌ Invalid Formation",
                     description=
                     f"Please choose from: {', '.join(available_formations.keys())}",
                     color=discord.Color.red())
@@ -427,7 +427,7 @@ async def on_message(message):
                                         lineup_setup_state['stage'])
             else:
                 embed = discord.Embed(
-                    title="âŒ Invalid Tactic",
+                    title="❌ Invalid Tactic",
                     description=
                     f"Please choose from: {', '.join(available_tactics)}",
                     color=discord.Color.red())
@@ -462,7 +462,7 @@ async def on_message(message):
 
             if not matched_player:
                 embed = discord.Embed(
-                    title="âŒ Invalid Player",
+                    title="❌ Invalid Player",
                     description=
                     f"Player '{content}' is not in your team or doesn't match the {pos.upper()} position. Use !myplayers to check.",
                     color=discord.Color.red())
@@ -471,7 +471,7 @@ async def on_message(message):
 
             if matched_player in lineup_setup_state['selected_players']:
                 embed = discord.Embed(
-                    title="âŒ Player Already Selected",
+                    title="❌ Player Already Selected",
                     description=
                     f"{matched_player['name']} is already in your lineup.",
                     color=discord.Color.red())
@@ -504,8 +504,8 @@ async def on_message(message):
                 }
                 if not save_data():
                     await message.channel.send(
-                        "âš ï¸ Error saving lineup data. Please try again.")
-                embed = discord.Embed(title="âœ… Lineup Set",
+                        "⚠️ Error saving lineup data. Please try again.")
+                embed = discord.Embed(title="✅ Lineup Set",
                                       color=discord.Color.green())
                 embed.add_field(name="Formation",
                                 value=lineup_setup_state['formation'].upper(),
@@ -545,7 +545,7 @@ async def prompt_for_player(channel, user, position):
 
     if not available_players:
         embed = discord.Embed(
-            title="âŒ No Players Available",
+            title="❌ No Players Available",
             description=
             f"You have no available {position.upper()} players for your lineup.",
             color=discord.Color.red())
@@ -554,7 +554,7 @@ async def prompt_for_player(channel, user, position):
         return
 
     embed = discord.Embed(
-        title=f"ðŸ“‹ Select {position.upper()} ({count_needed} needed)",
+        title=f"📋 Select {position.upper()} ({count_needed} needed)",
         description=
         f"Please type the name or initial of a {position.upper()} player:",
         color=discord.Color.blue())
@@ -603,7 +603,7 @@ async def on_reaction_add(reaction, user):
     if auction_state['host'] == user.id:
         auction_state['last_host_activity'] = time.time()
 
-    if str(reaction.emoji) == 'ðŸ’°':
+    if str(reaction.emoji) == '💰':
         fake_ctx = type(
             'obj', (object, ), {
                 'author': user,
@@ -611,7 +611,7 @@ async def on_reaction_add(reaction, user):
                 'channel': reaction.message.channel
             })
         await bid(fake_ctx)
-    elif str(reaction.emoji) == 'âŒ':
+    elif str(reaction.emoji) == '❌':
         await handle_pass_reaction(user, reaction.message.channel)
 
 
@@ -644,14 +644,14 @@ async def handle_pass_reaction(user, channel):
         auction_state['unsold_players'].add(player['name'])
 
         embed = discord.Embed(
-            title="ðŸš« Player Unsold",
+            title="🚫 Player Unsold",
             description=
             f"**{player['name']}** received no bids and goes unsold.",
             color=discord.Color.red())
         await channel.send(embed=embed)
     else:
         embed = discord.Embed(
-            title="âš ï¸ Player Passed",
+            title="⚠️ Player Passed",
             description=
             f"{user.display_name} passed. Waiting for {len(remaining)} more to pass.",
             color=discord.Color.orange())
@@ -685,7 +685,7 @@ async def check_host_activity(channel_id):
             channel = bot.get_channel(channel_id)
             if channel:
                 await channel.send(
-                    "â° Auction ended due to host inactivity for 5 minutes. Participant budgets, teams, and lineups have been reset."
+                    "⏰ Auction ended due to host inactivity for 5 minutes. Participant budgets, teams, and lineups have been reset."
                 )
 
             del active_auctions[channel_id]
@@ -700,14 +700,14 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
     """Starts a new auction, registers participants, and prompts for set selection."""
     if ctx.channel.id in active_auctions:
         await ctx.send(
-            "âŒ An auction is already active in this channel. Please use a different channel or end the current auction first."
+            "❌ An auction is already active in this channel. Please use a different channel or end the current auction first."
         )
         return
 
     if is_user_in_any_auction(
             ctx.author.id) and ctx.author.id != PRIVILEGED_USER_ID:
         await ctx.send(
-            f"âŒ {ctx.author.display_name}, you are already participating in another auction."
+            f"❌ {ctx.author.display_name}, you are already participating in another auction."
         )
         return
 
@@ -715,7 +715,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         if is_user_in_any_auction(
                 member.id) and member.id != PRIVILEGED_USER_ID:
             await ctx.send(
-                f"âŒ {member.display_name} is already participating in another auction."
+                f"❌ {member.display_name} is already participating in another auction."
             )
             return
 
@@ -759,7 +759,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
         ensure_user_structures(participant_id)
 
     embed = discord.Embed(
-        title="ðŸŽ¯ Select Auction Set",
+        title="🎯 Select Auction Set",
         description="Please choose which set you want to auction:",
         color=discord.Color.blue())
 
@@ -780,7 +780,7 @@ async def startauction(ctx, *members: discord.Member, timer: int = 30):
 @bot.command()
 async def sets(ctx):
     """Shows all available auction sets."""
-    embed = discord.Embed(title="ðŸŽ¯ Available Auction Sets",
+    embed = discord.Embed(title="🎯 Available Auction Sets",
                           description="Here are all the available sets:",
                           color=discord.Color.blue())
 
@@ -814,7 +814,7 @@ async def participants(ctx):
     current_set_name = available_sets.get(auction_state['current_set'],
                                           'No set selected')
 
-    embed = discord.Embed(title="ðŸ‘¥ Registered Participants",
+    embed = discord.Embed(title="👥 Registered Participants",
                           description="\n".join(users),
                           color=discord.Color.green())
     embed.add_field(name="Current Set", value=current_set_name, inline=False)
@@ -840,14 +840,14 @@ async def add(ctx, member: discord.Member):
 
     if is_user_in_any_auction(member.id) and member.id != PRIVILEGED_USER_ID:
         await ctx.send(
-            f"âŒ {member.display_name} is already participating in another auction."
+            f"❌ {member.display_name} is already participating in another auction."
         )
         return
 
     auction_state['participants'].add(str(member.id))
     ensure_user_structures(str(member.id))
 
-    await ctx.send(f"âœ… {member.mention} has been added to this auction.")
+    await ctx.send(f"✅ {member.mention} has been added to this auction.")
 
 
 @bot.command()
@@ -869,25 +869,25 @@ async def remove(ctx, member: discord.Member):
 
     if str(member.id) not in auction_state['participants']:
         await ctx.send(
-            f"âŒ {member.mention} is not a participant in this auction.")
+            f"❌ {member.mention} is not a participant in this auction.")
         return
 
     confirm_msg = await ctx.send(
-        f"âš ï¸ Are you sure you want to remove {member.mention} from this auction? React with âœ… to confirm."
+        f"⚠️ Are you sure you want to remove {member.mention} from this auction? React with ✅ to confirm."
     )
-    await confirm_msg.add_reaction("âœ…")
+    await confirm_msg.add_reaction("✅")
 
     def check(reaction, user):
         return user == ctx.author and str(
-            reaction.emoji) == "âœ…" and reaction.message.id == confirm_msg.id
+            reaction.emoji) == "✅" and reaction.message.id == confirm_msg.id
 
     try:
         await bot.wait_for('reaction_add', timeout=15.0, check=check)
         auction_state['participants'].remove(str(member.id))
         await ctx.send(
-            f"âŒ {member.mention} has been removed from this auction.")
+            f"❌ {member.mention} has been removed from this auction.")
     except asyncio.TimeoutError:
-        await ctx.send("â° Removal cancelled. No confirmation received in time."
+        await ctx.send("⏰ Removal cancelled. No confirmation received in time."
                        )
 
 
@@ -912,7 +912,7 @@ async def setlineup(ctx, lineup_name: str = 'main'):
     lineup_setup_state['lineup_name'] = lineup_name.lower()
 
     embed = discord.Embed(
-        title="ðŸŽ¯ Select Formation",
+        title="🎯 Select Formation",
         description="Please choose a formation for your lineup:",
         color=discord.Color.blue())
     embed.add_field(name="Available Formations",
@@ -931,7 +931,7 @@ async def setlineup(ctx, lineup_name: str = 'main'):
         if lineup_setup_state['user_id'] == user_id and lineup_setup_state[
                 'stage'] is not None:
             await ctx.send(
-                "â° Lineup setup timed out. Please run !setlineup again.")
+                "⏰ Lineup setup timed out. Please run !setlineup again.")
             reset_lineup_setup_state()
 
 
@@ -945,7 +945,7 @@ async def viewlineup(ctx):
         return
 
     lineup = user_lineups[user_id]
-    embed = discord.Embed(title=f"ðŸ“‹ {ctx.author.display_name}'s Lineup",
+    embed = discord.Embed(title=f"📋 {ctx.author.display_name}'s Lineup",
                           color=discord.Color.teal())
     embed.add_field(name="Formation",
                     value=lineup['formation'].upper(),
@@ -983,7 +983,7 @@ def create_position_command(position):
 
         if auction_state['current_set'] is None:
             await ctx.send(
-                "âŒ No set has been selected for this auction. The host needs to select a set first."
+                "❌ No set has been selected for this auction. The host needs to select a set first."
             )
             return
 
@@ -1031,7 +1031,7 @@ def create_position_command(position):
                                                     MIN_BASE_PRICE)
         auction_state['highest_bidder'] = None
 
-        embed = discord.Embed(title="ðŸŽ¨ Player Up for Auction",
+        embed = discord.Embed(title="🎨 Player Up for Auction",
                               color=discord.Color.gold())
         embed.add_field(name="Name", value=player['name'], inline=True)
         embed.add_field(name="Position",
@@ -1048,12 +1048,12 @@ def create_position_command(position):
                         inline=False)
         embed.set_footer(
             text=
-            "Use !bid or !bid [amount] to place a bid. React with ðŸ’° to bid, âŒ to pass."
+            "Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass."
         )
 
         message = await ctx.send(embed=embed)
-        await message.add_reaction("ðŸ’°")
-        await message.add_reaction("âŒ")
+        await message.add_reaction("💰")
+        await message.add_reaction("❌")
 
         async def auto_sold():
             try:
@@ -1066,19 +1066,19 @@ def create_position_command(position):
                                          False) or auction_state.get(
                                              'current_player') != player:
                     return
-                await ctx.send("â³ Going once...")
+                await ctx.send("⏳ Going once...")
                 await asyncio.sleep(1)
                 if not auction_state.get('bidding',
                                          False) or auction_state.get(
                                              'current_player') != player:
                     return
-                await ctx.send("â³ Going twice...")
+                await ctx.send("⏳ Going twice...")
                 await asyncio.sleep(1)
                 if not auction_state.get('bidding',
                                          False) or auction_state.get(
                                              'current_player') != player:
                     return
-                await ctx.send("â³ Final call...")
+                await ctx.send("⏳ Final call...")
                 await asyncio.sleep(1)
                 if not auction_state.get('bidding',
                                          False) or auction_state.get(
@@ -1141,7 +1141,7 @@ async def bid(ctx, *args):
                 return
         except ValueError:
             await ctx.send(
-                "âŒ Invalid price format. Use numbers like 10m or 1000000.")
+                "❌ Invalid price format. Use numbers like 10m or 1000000.")
             return
 
         # Check if player has been sold or unsold
@@ -1149,12 +1149,12 @@ async def bid(ctx, *args):
             for player in team:
                 if player['name'].lower() == player_name.lower():
                     await ctx.send(
-                        f"âŒ Player **{player_name}** has already been sold.")
+                        f"❌ Player **{player_name}** has already been sold.")
                     return
 
         if player_name.lower() in auction_state['unsold_players']:
             await ctx.send(
-                f"âŒ Player **{player_name}** was previously marked as unsold in this auction."
+                f"❌ Player **{player_name}** was previously marked as unsold in this auction."
             )
             return
 
@@ -1183,7 +1183,7 @@ async def bid(ctx, *args):
         if auction_state['timeout_task']:
             auction_state['timeout_task'].cancel()
 
-        embed = discord.Embed(title="ðŸŽ¨ Custom Player Up for Auction",
+        embed = discord.Embed(title="🎨 Custom Player Up for Auction",
                               color=discord.Color.gold())
         embed.add_field(name="Name", value=custom_player['name'], inline=True)
         embed.add_field(name="Position", value="Custom", inline=True)
@@ -1197,12 +1197,12 @@ async def bid(ctx, *args):
                         inline=False)
         embed.set_footer(
             text=
-            "Use !bid or !bid [amount] to place a bid. React with ðŸ’° to bid, âŒ to pass."
+            "Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass."
         )
 
         message = await ctx.send(embed=embed)
-        await message.add_reaction("ðŸ’°")
-        await message.add_reaction("âŒ")
+        await message.add_reaction("💰")
+        await message.add_reaction("❌")
 
         async def auto_sold():
             try:
@@ -1215,19 +1215,19 @@ async def bid(ctx, *args):
                         'bidding', False) or auction_state.get(
                             'current_player') != custom_player:
                     return
-                await ctx.send("â³ Going once...")
+                await ctx.send("⏳ Going once...")
                 await asyncio.sleep(1)
                 if not auction_state.get(
                         'bidding', False) or auction_state.get(
                             'current_player') != custom_player:
                     return
-                await ctx.send("â³ Going twice...")
+                await ctx.send("⏳ Going twice...")
                 await asyncio.sleep(1)
                 if not auction_state.get(
                         'bidding', False) or auction_state.get(
                             'current_player') != custom_player:
                     return
-                await ctx.send("â³ Final call...")
+                await ctx.send("⏳ Final call...")
                 await asyncio.sleep(1)
                 if not auction_state.get(
                         'bidding', False) or auction_state.get(
@@ -1274,7 +1274,7 @@ async def bid(ctx, *args):
             new_price = int(float(amount) * multiplier)
         except ValueError:
             await ctx.send(
-                "âŒ Invalid bid amount format. Use numbers like 50m or 1000000."
+                "❌ Invalid bid amount format. Use numbers like 50m or 1000000."
             )
             return
 
@@ -1286,7 +1286,7 @@ async def bid(ctx, *args):
                 'current_price'] + MIN_BID_INCREMENT and new_price != auction_state[
                     'current_price']:
             await ctx.send(
-                f"âŒ Minimum bid increment is {format_currency(MIN_BID_INCREMENT)}."
+                f"❌ Minimum bid increment is {format_currency(MIN_BID_INCREMENT)}."
             )
             return
     else:
@@ -1301,7 +1301,7 @@ async def bid(ctx, *args):
     auction_state['current_price'] = new_price
     auction_state['highest_bidder'] = user_id
     await ctx.send(
-        f"ðŸ¡ {ctx.author.display_name} bids {format_currency(new_price)}!")
+        f"🏡 {ctx.author.display_name} bids {format_currency(new_price)}!")
 
     if auction_state['timeout_task']:
         auction_state['timeout_task'].cancel()
@@ -1315,17 +1315,17 @@ async def bid(ctx, *args):
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
                 return
-            await ctx.send("â³ Going once...")
+            await ctx.send("⏳ Going once...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
                 return
-            await ctx.send("â³ Going twice...")
+            await ctx.send("⏳ Going twice...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
                 return
-            await ctx.send("â³ Final call...")
+            await ctx.send("⏳ Final call...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != current_player:
@@ -1353,7 +1353,7 @@ async def _finalize_sold(ctx):
         auction_state['highest_bidder'] = None
         auction_state['pass_votes'].clear()
         await ctx.send(
-            f"âŒ No one bid for **{player['name']}**. They go unsold.")
+            f"❌ No one bid for **{player['name']}**. They go unsold.")
         return
 
     winner_id = auction_state['highest_bidder']
@@ -1399,10 +1399,10 @@ async def _finalize_sold(ctx):
     auction_state['pass_votes'].clear()
     if not save_data():
         await ctx.send(
-            "âš ï¸ Error saving data. Sale recorded but data may not persist.")
+            "⚠️ Error saving data. Sale recorded but data may not persist.")
         return
 
-    embed = discord.Embed(title="âœ… Player Sold!", color=discord.Color.green())
+    embed = discord.Embed(title="✅ Player Sold!", color=discord.Color.green())
     embed.add_field(name="Player", value=player['name'], inline=True)
     embed.add_field(name="Sold To",
                     value=f"<@{winner_id}> ({winner_name})",
@@ -1470,7 +1470,7 @@ async def rebid(ctx):
 
     if not save_data():
         await ctx.send(
-            "âš ï¸ Error saving data. Rebid proceeding, but data may not persist."
+            "⚠️ Error saving data. Rebid proceeding, but data may not persist."
         )
 
     # Start re-auction
@@ -1484,7 +1484,7 @@ async def rebid(ctx):
     if auction_state['timeout_task']:
         auction_state['timeout_task'].cancel()
 
-    embed = discord.Embed(title="ðŸŽ¨ Player Re-Auction",
+    embed = discord.Embed(title="🎨 Player Re-Auction",
                           color=discord.Color.gold())
     embed.add_field(name="Name", value=player['name'], inline=True)
     embed.add_field(name="Position",
@@ -1502,12 +1502,12 @@ async def rebid(ctx):
                     inline=False)
     embed.set_footer(
         text=
-        "Use !bid or !bid [amount] to place a bid. React with ðŸ’° to bid, âŒ to pass."
+        "Use !bid or !bid [amount] to place a bid. React with 💰 to bid, ❌ to pass."
     )
 
     message = await ctx.send(embed=embed)
-    await message.add_reaction("ðŸ’°")
-    await message.add_reaction("âŒ")
+    await message.add_reaction("💰")
+    await message.add_reaction("❌")
 
     async def auto_sold():
         try:
@@ -1518,17 +1518,17 @@ async def rebid(ctx):
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
                 return
-            await ctx.send("â³ Going once...")
+            await ctx.send("⏳ Going once...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
                 return
-            await ctx.send("â³ Going twice...")
+            await ctx.send("⏳ Going twice...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
                 return
-            await ctx.send("â³ Final call...")
+            await ctx.send("⏳ Final call...")
             await asyncio.sleep(1)
             if not auction_state.get('bidding', False) or auction_state.get(
                     'current_player') != player:
@@ -1539,7 +1539,7 @@ async def rebid(ctx):
 
     auction_state['timeout_task'] = bot.loop.create_task(auto_sold())
     await ctx.send(
-        f"âœ… **{player['name']}** is being re-auctioned. Previous buyer <@{buyer_id}> has been refunded {format_currency(price)}."
+        f"✅ **{player['name']}** is being re-auctioned. Previous buyer <@{buyer_id}> has been refunded {format_currency(price)}."
     )
 
 
@@ -1584,7 +1584,7 @@ async def status(ctx):
 
     if not auction_state['bidding'] or not auction_state['current_player']:
         await ctx.send(
-            "âš ï¸ No player is currently being auctioned in this channel.")
+            "⚠️ No player is currently being auctioned in this channel.")
         return
 
     player = auction_state['current_player']
@@ -1592,7 +1592,7 @@ async def status(ctx):
     bidder_id = auction_state['highest_bidder']
     bidder = f"<@{bidder_id}>" if bidder_id else "None"
 
-    embed = discord.Embed(title="ðŸ“¢ Current Auction Status",
+    embed = discord.Embed(title="📢 Current Auction Status",
                           color=discord.Color.blue())
     embed.add_field(name="Player", value=player['name'], inline=True)
     embed.add_field(name="Position",
@@ -1646,7 +1646,7 @@ async def unsold(ctx):
         auction_state['timeout_task'].cancel()
 
     await ctx.send(
-        f"âŒ Player **{player['name']}** goes unsold in this auction.")
+        f"❌ Player **{player['name']}** goes unsold in this auction.")
 
 
 @bot.command()
@@ -1662,7 +1662,7 @@ async def myplayers(ctx):
         active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
 
     team = user_teams[user_id]
-    embed = discord.Embed(title=f"ðŸ“‹ {ctx.author.display_name}'s Players",
+    embed = discord.Embed(title=f"📋 {ctx.author.display_name}'s Players",
                           color=discord.Color.teal())
 
     for p in team:
@@ -1686,7 +1686,7 @@ async def budget(ctx):
             ctx.channel.id]['host'] == ctx.author.id:
         active_auctions[ctx.channel.id]['last_host_activity'] = time.time()
 
-    await ctx.send(f"ðŸ’° Your remaining budget: {format_currency(budget)}")
+    await ctx.send(f"💰 Your remaining budget: {format_currency(budget)}")
 
 
 @bot.command()
@@ -1725,7 +1725,7 @@ async def rankteams(ctx):
 
     team_scores.sort(key=lambda x: x[1], reverse=True)
 
-    embed = discord.Embed(title="ðŸ† Team Rankings",
+    embed = discord.Embed(title="🏆 Team Rankings",
                           color=discord.Color.gold())
     description_list = []
 
@@ -1774,11 +1774,11 @@ async def endauction(ctx):
 
     if not save_data():
         await ctx.send(
-            "âš ï¸ Error saving data. Auction ended, but data may not persist.")
+            "⚠️ Error saving data. Auction ended, but data may not persist.")
         return
 
     await ctx.send(
-        "â° Auction in this channel has been ended. Participant budgets, teams, and lineups have been reset."
+        "⏰ Auction in this channel has been ended. Participant budgets, teams, and lineups have been reset."
     )
 
 
@@ -1791,17 +1791,17 @@ async def lineups(ctx):
         return
     
     active_name = active_lineups.get(user_id, 'main')
-    embed = discord.Embed(title="ðŸŽ¯ Your Lineups", color=discord.Color.blue())
+    embed = discord.Embed(title="🎯 Your Lineups", color=discord.Color.blue())
     
     for lineup_name, lineup_data in user_lineups[user_id].items():
         player_count = len(lineup_data.get('players', []))
         formation = lineup_data.get('formation', '4-4-2')
         tactic = lineup_data.get('tactic', 'Balanced')
         
-        status = "ðŸ† ACTIVE" if lineup_name == active_name else "âšª"
+        status = "🏆 ACTIVE" if lineup_name == active_name else "⚪"
         value = f"{status}\n{player_count}/11 players\n{formation} ({tactic})"
         
-        embed.add_field(name=f"ðŸ“‹ {lineup_name.title()}", value=value, inline=True)
+        embed.add_field(name=f"📋 {lineup_name.title()}", value=value, inline=True)
     
     embed.set_footer(text="Use !switchlineup <name> to change active lineup | !setlineup <name> to create/edit")
     await ctx.send(embed=embed)
@@ -1829,8 +1829,8 @@ async def switchlineup(ctx, lineup_name: str = None):
     formation = lineup_data.get('formation', '4-4-2')
     tactic = lineup_data.get('tactic', 'Balanced')
     
-    await ctx.send(f"âœ… Switched to lineup: **{lineup_name.title()}**\n"
-                  f"ðŸ“‹ {player_count}/11 players | {formation} ({tactic})")
+    await ctx.send(f"✅ Switched to lineup: **{lineup_name.title()}**\n"
+                  f"📋 {player_count}/11 players | {formation} ({tactic})")
 
 
 @bot.command()
@@ -1858,20 +1858,20 @@ async def deletelineup(ctx, lineup_name: str = None):
         active_lineups[user_id] = 'main'
     
     save_data()
-    await ctx.send(f"ðŸ—‘ï¸ Deleted lineup: **{lineup_name.title()}**")
+    await ctx.send(f"🗑️ Deleted lineup: **{lineup_name.title()}**")
 
 
 @bot.command()
 async def footy(ctx, category: str = None):
     """Shows categorized help for the bot."""
-    embed = discord.Embed(title="ðŸ“– Football Auction Bot Commands",
+    embed = discord.Embed(title="📖 Football Auction Bot Commands",
                           color=discord.Color.blue())
 
     if category is None:
         embed.description = (
             "Use `!footy <category>` to view commands in that category.\n\n"
             "Available categories:\n"
-            "âš½ auction, ðŸ‘¥ team, ðŸ“Š leaderboards")
+            "⚽ auction, 👥 team, 📊 leaderboards")
     elif category.lower() == "auction":
         embed.add_field(
             name="Auction Commands",
@@ -1914,7 +1914,7 @@ async def footy(ctx, category: str = None):
 async def market(ctx):
     """Show free agent players available to bid on."""
     free_agents = ["Player A", "Player B", "Player C", "Player D", "Player E"]
-    embed = discord.Embed(title="ðŸ›’ Free Agent Market",
+    embed = discord.Embed(title="🛒 Free Agent Market",
                           color=discord.Color.gold())
     for p in free_agents:
         form = player_form.get(p, 5)
@@ -1929,30 +1929,30 @@ async def market(ctx):
 async def events(ctx):
     """Trigger or show random events."""
     events_list = [
-        "ðŸš‘ Injury - One of your players is out for 2 matches!",
-        "âš¡ Form Boost - Random player gains +2 form for 3 matches!",
-        "ðŸ“° Transfer Rumor - Random player may be swapped with the market!",
+        "🚑 Injury - One of your players is out for 2 matches!",
+        "⚡ Form Boost - Random player gains +2 form for 3 matches!",
+        "📰 Transfer Rumor - Random player may be swapped with the market!",
     ]
     event = random.choice(events_list)
-    await ctx.send(f"ðŸŽ² Random Event: {event}")
+    await ctx.send(f"🎲 Random Event: {event}")
 
 
 @bot.group(invoke_without_command=True)
 async def draft(ctx):
     """Draft mode base command."""
     await ctx.send(
-        "ðŸ“‹ Use `!draft start` to begin the draft or check draft commands with !footy."
+        "📋 Use `!draft start` to begin the draft or check draft commands with !footy."
     )
 
 
 @draft.command()
 async def start(ctx):
-    await ctx.send("ðŸ“‹ Draft mode started! Turn order will be assigned.")
+    await ctx.send("📋 Draft mode started! Turn order will be assigned.")
 
 
 @draft.command()
 async def pick(ctx, *, player_name):
-    await ctx.send(f"âœ… {ctx.author.mention} picked **{player_name}**.")
+    await ctx.send(f"✅ {ctx.author.mention} picked **{player_name}**.")
 
 
 # -------------------- Who Am I? Game Mode --------------------
@@ -2009,17 +2009,17 @@ async def whoami(ctx, action: str = None):
         }
         
         embed = discord.Embed(
-            title="ðŸŽ­ Who Am I? - Lobby Open",
-            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with âœ… to join!",
+            title="🎭 Who Am I? - Lobby Open",
+            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with ✅ to join!",
             color=discord.Color.green()
         )
         embed.set_footer(text="Host uses !whoami begin to start the game")
         
         join_msg = await ctx.send(embed=embed)
-        await join_msg.add_reaction("âœ…")
+        await join_msg.add_reaction("✅")
         
         def check(reaction, user):
-            return str(reaction.emoji) == "âœ…" and reaction.message.id == join_msg.id and not user.bot
+            return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
         
         async def wait_for_joins():
             while whoami_sessions.get(ch, {}).get('state') == 'lobby':
@@ -2090,7 +2090,7 @@ async def whoami(ctx, action: str = None):
             try:
                 user = await bot.fetch_user(int(uid))
                 embed = discord.Embed(
-                    title="ðŸŽ­ Who Am I? - Game Started!",
+                    title="🎭 Who Am I? - Game Started!",
                     description="**Your mission:** Figure out which player YOU are!\n\nHere's what everyone else got:",
                     color=discord.Color.blue()
                 )
@@ -2106,7 +2106,7 @@ async def whoami(ctx, action: str = None):
                         )
                 
                 embed.add_field(
-                    name="ðŸ¤” Your Player",
+                    name="🤔 Your Player",
                     value="**??? - THIS IS WHAT YOU NEED TO GUESS!**",
                     inline=False
                 )
@@ -2114,21 +2114,21 @@ async def whoami(ctx, action: str = None):
                 
                 await user.send(embed=embed)
             except discord.Forbidden:
-                await ctx.send(f"âš ï¸ Couldn't DM {user.display_name}. Make sure DMs are enabled!")
+                await ctx.send(f"⚠️ Couldn't DM {user.display_name}. Make sure DMs are enabled!")
             except Exception as e:
                 print(f"Error sending DM to {uid}: {e}")
         
         # Announce in channel
         announce_embed = discord.Embed(
-            title="ðŸŽ­ Who Am I? - Game Started!",
+            title="🎭 Who Am I? - Game Started!",
             description=f"**{len(session['players'])} players** are in the game!\n\n"
                        f"**Set:** {available_sets[session['set_key']]}\n\n"
                        "Each player has been assigned a footballer. Check your DMs to see everyone else's players!\n\n"
                        "**Rules:**\n"
-                       "â€¢ Ask yes/no questions to figure out YOUR player\n"
-                       "â€¢ You can see everyone else's players but not your own\n"
-                       "â€¢ Use `!whoami reveal` when you think you know!\n"
-                       "â€¢ First to guess correctly wins!",
+                       "• Ask yes/no questions to figure out YOUR player\n"
+                       "• You can see everyone else's players but not your own\n"
+                       "• Use `!whoami reveal` when you think you know!\n"
+                       "• First to guess correctly wins!",
             color=discord.Color.gold()
         )
         await ctx.send(embed=announce_embed)
@@ -2155,7 +2155,7 @@ async def whoami(ctx, action: str = None):
         session['revealed'].add(uid)
         
         embed = discord.Embed(
-            title="ðŸŽ­ Player Revealed!",
+            title="🎭 Player Revealed!",
             description=f"{ctx.author.mention}'s player was:",
             color=discord.Color.purple()
         )
@@ -2169,7 +2169,7 @@ async def whoami(ctx, action: str = None):
         
         if len(session['revealed']) == len(session['players']):
             embed.add_field(
-                name="ðŸ† Game Over!",
+                name="🏆 Game Over!",
                 value="All players have been revealed!",
                 inline=False
             )
@@ -2189,7 +2189,7 @@ async def whoami(ctx, action: str = None):
             return
         
         del whoami_sessions[ch]
-        await ctx.send("ðŸŽ­ Who Am I game has been ended.")
+        await ctx.send("🎭 Who Am I game has been ended.")
         return
     
     else:
@@ -2225,7 +2225,7 @@ async def guess(ctx, *, player_name: str):
         session['revealed'].add(uid)
         
         embed = discord.Embed(
-            title="ðŸ† CORRECT GUESS!",
+            title="🏆 CORRECT GUESS!",
             description=f"{ctx.author.mention} guessed correctly!",
             color=discord.Color.green()
         )
@@ -2237,7 +2237,7 @@ async def guess(ctx, *, player_name: str):
         
         if len(session['revealed']) == len(session['players']):
             embed.add_field(
-                name="ðŸŽ® Game Over!",
+                name="🎮 Game Over!",
                 value="All players have been revealed!",
                 inline=False
             )
@@ -2245,7 +2245,7 @@ async def guess(ctx, *, player_name: str):
         
         await ctx.send(embed=embed)
     else:
-        await ctx.send(f"âŒ Wrong! **{player_name}** is not your player. Keep guessing!")
+        await ctx.send(f"❌ Wrong! **{player_name}** is not your player. Keep guessing!")
 
 
 # -------------------- Among Us Game Mode --------------------
@@ -2304,17 +2304,17 @@ async def amongus(ctx, action: str = None):
         }
         
         embed = discord.Embed(
-            title="ðŸ”´ Among Us - Lobby Open",
-            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with âœ… to join!",
+            title="🔴 Among Us - Lobby Open",
+            description=f"**Set:** {available_sets[set_key]}\n\nHost: {ctx.author.mention}\n\nReact with ✅ to join!",
             color=discord.Color.red()
         )
         embed.set_footer(text="Host uses !amongus begin to start the game")
         
         join_msg = await ctx.send(embed=embed)
-        await join_msg.add_reaction("âœ…")
+        await join_msg.add_reaction("✅")
         
         def check(reaction, user):
-            return str(reaction.emoji) == "âœ…" and reaction.message.id == join_msg.id and not user.bot
+            return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
         
         async def wait_for_joins():
             while amongus_sessions.get(ch, {}).get('state') == 'lobby':
@@ -2391,7 +2391,7 @@ async def amongus(ctx, action: str = None):
                 if uid == session['impostor']:
                     # Impostor gets different player
                     embed = discord.Embed(
-                        title="ðŸ”´ You are the IMPOSTOR!",
+                        title="🔴 You are the IMPOSTOR!",
                         description="Everyone else has a different player. Blend in and don't get caught!",
                         color=discord.Color.red()
                     )
@@ -2406,7 +2406,7 @@ async def amongus(ctx, action: str = None):
                 else:
                     # Crewmates get the same player
                     embed = discord.Embed(
-                        title="ðŸ”µ You are a CREWMATE!",
+                        title="🔵 You are a CREWMATE!",
                         description="You and other crewmates have the same player. Find the impostor!",
                         color=discord.Color.blue()
                     )
@@ -2421,22 +2421,22 @@ async def amongus(ctx, action: str = None):
                 
                 await user.send(embed=embed)
             except discord.Forbidden:
-                await ctx.send(f"âš ï¸ Couldn't DM {user.display_name}. Make sure DMs are enabled!")
+                await ctx.send(f"⚠️ Couldn't DM {user.display_name}. Make sure DMs are enabled!")
             except Exception as e:
                 print(f"Error sending DM to {uid}: {e}")
         
         # Announce in channel
         announce_embed = discord.Embed(
-            title="ðŸ”´ Among Us - Game Started!",
+            title="🔴 Among Us - Game Started!",
             description=f"**{len(session['players'])} players** are in the game!\n\n"
                        f"**Set:** {available_sets[session['set_key']]}\n\n"
                        "One player is the IMPOSTOR with a different footballer!\n"
                        "Everyone else has the SAME player.\n\n"
                        "**Rules:**\n"
-                       "â€¢ Discuss and figure out who has a different player\n"
-                       "â€¢ Use `!vote @player` to vote someone out\n"
-                       "â€¢ Majority vote ejects the player\n"
-                       "â€¢ Find the impostor to win!",
+                       "• Discuss and figure out who has a different player\n"
+                       "• Use `!vote @player` to vote someone out\n"
+                       "• Majority vote ejects the player\n"
+                       "• Find the impostor to win!",
             color=discord.Color.red()
         )
         announce_embed.add_field(
@@ -2458,7 +2458,7 @@ async def amongus(ctx, action: str = None):
             return
         
         del amongus_sessions[ch]
-        await ctx.send("ðŸ”´ Among Us game has been ended.")
+        await ctx.send("🔴 Among Us game has been ended.")
         return
     
     else:
@@ -2502,7 +2502,7 @@ async def vote(ctx, target: discord.Member = None):
     
     # Record vote
     session['votes'][voter_id] = target_id
-    await ctx.send(f"âœ… {ctx.author.mention} voted for {target.mention}")
+    await ctx.send(f"✅ {ctx.author.mention} voted for {target.mention}")
     
     # Count active players (not ejected)
     active_players = [p for p in session['players'] if p not in session['ejected']]
@@ -2528,7 +2528,7 @@ async def vote(ctx, target: discord.Member = None):
         
         if len(top_voted) > 1:
             # Tie - no ejection
-            await ctx.send(f"ðŸ¤ Tie vote! No one was ejected. Players with {max_votes} votes: {', '.join([f'<@{uid}>' for uid in top_voted])}")
+            await ctx.send(f"🤝 Tie vote! No one was ejected. Players with {max_votes} votes: {', '.join([f'<@{uid}>' for uid in top_voted])}")
             session['votes'].clear()
             return
         
@@ -2544,7 +2544,7 @@ async def vote(ctx, target: discord.Member = None):
             if ejected_id == session['impostor']:
                 # Crewmates win!
                 embed = discord.Embed(
-                    title="ðŸŽ‰ CREWMATES WIN!",
+                    title="🎉 CREWMATES WIN!",
                     description=f"{ejected_user.mention} was ejected with {max_votes} votes.",
                     color=discord.Color.green()
                 )
@@ -2559,7 +2559,7 @@ async def vote(ctx, target: discord.Member = None):
             else:
                 # Wrong person ejected
                 embed = discord.Embed(
-                    title="âŒ Player Ejected!",
+                    title="❌ Player Ejected!",
                     description=f"{ejected_user.mention} was ejected with {max_votes} votes.",
                     color=discord.Color.orange()
                 )
@@ -2575,7 +2575,7 @@ async def vote(ctx, target: discord.Member = None):
                 if len(remaining_active) <= 2:
                     impostor_user = await bot.fetch_user(int(session['impostor']))
                     embed = discord.Embed(
-                        title="ðŸ”´ IMPOSTOR WINS!",
+                        title="🔴 IMPOSTOR WINS!",
                         description="Not enough players left to vote out the impostor!",
                         color=discord.Color.red()
                     )
@@ -2594,191 +2594,954 @@ async def vote(ctx, target: discord.Member = None):
             print(f"Error processing ejection: {e}")
             await ctx.send(f"<@{ejected_id}> was ejected with {max_votes} votes!")
 
-# ================================ MONOPOLY GAME FEATURE ================================
-
-PLAYER_EMOJIS = ["🔴", "🟦", "🟩", "🟨", "🟧", "🟪"]
-
-MONOPOLY_BOARD = [
-    "GO", "Brown1", "CommunityChest", "Brown2", "IncomeTax", "RR1", "LightBlue1", "Chance", "LightBlue2", "LightBlue3",
-    "Jail", "Pink1", "Utility1", "Pink2", "Pink3", "RR2", "Orange1", "CommunityChest", "Orange2", "Orange3",
-    "FreeParking", "Red1", "Chance", "Red2", "Red3", "RR3", "Yellow1", "Yellow2", "Utility2", "Yellow3",
-    "GoToJail", "Green1", "Green2", "CommunityChest", "Green3", "RR4", "Chance", "Blue1", "LuxuryTax", "Blue2"
-]
-
-BOARD_EMOJI = {
-    "GO": "🟩", "Brown1": "🟫", "Brown2": "🟫",
-    "CommunityChest": "🎁", "IncomeTax": "💸", "RR1": "🚄",
-    "LightBlue1": "🟦", "Chance": "❓", "LightBlue2": "🟦", "LightBlue3": "🟦",
-    "Jail": "🚓", "Pink1": "🌸", "Utility1": "💡", "Pink2": "🌸", "Pink3": "🌸", "RR2": "🚄",
-    "Orange1": "🟧", "Orange2": "🟧", "Orange3": "🟧",
-    "FreeParking": "🅿️", "Red1": "🔴", "Red2": "🔴", "Red3": "🔴", "RR3": "🚄",
-    "Yellow1": "🟨", "Yellow2": "🟨", "Utility2": "🚰", "Yellow3": "🟨",
-    "GoToJail": "🚨", "Green1": "🟩", "Green2": "🟩", "Green3": "🟩", "RR4": "🚄",
-    "Blue1": "🔵", "LuxuryTax": "💲", "Blue2": "🔵"
-}
-PROPERTY_DETAILS = {
-    "Brown1": {"price": 60, "rent": [2,10,30,90,160,250]}, "Brown2": {"price": 60, "rent": [4,20,60,180,320,450]},
-    "LightBlue1": {"price": 100, "rent": [6,30,90,270,400,550]}, "LightBlue2": {"price": 100, "rent": [6,30,90,270,400,550]}, "LightBlue3": {"price": 120, "rent": [8,40,100,300,450,600]},
-    "Pink1": {"price": 140, "rent": [10,50,150,450,625,750]}, "Pink2": {"price": 140, "rent": [10,50,150,450,625,750]}, "Pink3": {"price": 160, "rent": [12,60,180,500,700,900]},
-    "Orange1": {"price": 180, "rent": [14,70,200,550,750,950]}, "Orange2": {"price": 180, "rent": [14,70,200,550,750,950]}, "Orange3": {"price": 200, "rent": [16,80,220,600,800,1000]},
-    # complete rent and price details as needed for all properties
-}
-CHANCE_CARDS = [
-    "Advance to GO", "Bank pays you dividend $50", "Go to Jail", 
-    "Advance to Illinois Ave"
-]
-CHEST_CARDS = [
-    "Doctor's fees Pay $50", "Bank error in your favor Collect $200", "Go to Jail"
-]
-
-class MonopolyPlayer:
-    def __init__(self, name, emoji):
-        self.name = name
-        self.emoji = emoji
-        self.money = 1500
-        self.position = 0
-        self.properties = []
-        self.jail_turns = 0
-        self.houses = {}
-        self.hotels = {}
-        self.mortgaged = set()
-
-class MonopolyGame:
-    def __init__(self):
-        self.players = []
-        self.current_player = 0
-        self.owned = {k: None for k in PROPERTY_DETAILS}
-        self.houses = {k: 0 for k in PROPERTY_DETAILS}
-        self.hotels = {k: False for k in PROPERTY_DETAILS}
-        self.chance_deck = CHANCE_CARDS.copy()
-        self.chest_deck = CHEST_CARDS.copy()
-        self.started = False
-    def next_player(self): self.current_player = (self.current_player + 1) % len(self.players)
-    def get_player(self, name): return next((p for p in self.players if p.name == name), None)
-
-GAME_INSTANCE = None
-
-def render_monopoly_board(player_positions):
-    symbols = [BOARD_EMOJI.get(s, "⬜") for s in MONOPOLY_BOARD]
-    for i, pos in enumerate(player_positions): symbols[pos] += PLAYER_EMOJIS[i]
-    top = symbols[:10]
-    right = symbols[10:20]
-    bottom = symbols[20:30][::-1]
-    left = symbols[30:40][::-1]
-    return "".join(top) + "\n" + "".join([right[i] + " "*9 + left[i] + "\n" for i in range(10)]) + "".join(bottom)
 
 @bot.command()
-async def monopoly_start(ctx):
-    global GAME_INSTANCE
-    GAME_INSTANCE = MonopolyGame(); GAME_INSTANCE.started = True
-    await ctx.send("Monopoly started! Type `!monopoly join` to join (max 6 players).")
-
-@bot.command()
-async def monopoly_join(ctx):
-    global GAME_INSTANCE
-    if GAME_INSTANCE and GAME_INSTANCE.started:
-        if len(GAME_INSTANCE.players) < 6:
-            emoji = PLAYER_EMOJIS[len(GAME_INSTANCE.players)]
-            GAME_INSTANCE.players.append(MonopolyPlayer(ctx.author.name, emoji))
-            await ctx.send(f"{ctx.author.name} joined as {emoji}!")
-        else:
-            await ctx.send("Game full (6 players max).")
-    else:
-        await ctx.send("No game running.")
-
-@bot.command()
-async def monopoly_board(ctx):
-    positions = [p.position for p in GAME_INSTANCE.players]
-    await ctx.send(f"**Monopoly Board:**\n{render_monopoly_board(positions)}")
-
-@bot.command()
-async def monopoly_roll(ctx):
-    p = GAME_INSTANCE.players[GAME_INSTANCE.current_player]
-    if p.jail_turns > 0:
-        roll1, roll2 = random.randint(1,6), random.randint(1,6)
-        await ctx.send(f"{p.emoji} in Jail! Rolls: {roll1}, {roll2}")
-        if roll1 == roll2:
-            p.jail_turns = 0; await ctx.send("Doubles! Free from Jail!")
-        else:
-            p.jail_turns -= 1
-            if p.jail_turns == 0: p.money -= 50; await ctx.send("Paid $50 after 3 attempts.")
+async def monopoly(ctx, action: str = None, *args):
+    """Complete Monopoly game implementation.
+    Usage: !monopoly start - Host starts the game
+           !monopoly join - Players join the lobby
+           !monopoly begin - Host begins after players join
+           !monopoly roll - Roll dice on your turn
+           !monopoly buy - Buy the property you're on
+           !monopoly board - View the game board
+           !monopoly status - View your status
+           !monopoly properties - View all properties and owners
+           !monopoly build <property> - Build house/hotel on property
+           !monopoly trade @player <offer> for <request> - Trade with another player
+           !monopoly end - End the game
+    """
+    ch = ctx.channel.id
+    
+    if action is None:
+        embed = discord.Embed(
+            title="🎲 Monopoly",
+            description="Classic Monopoly board game!",
+            color=discord.Color.gold()
+        )
+        embed.add_field(
+            name="Commands",
+            value="`!monopoly start` - Start a new game\n"
+                  "`!monopoly join` - Join the lobby\n"
+                  "`!monopoly begin` - Begin the game\n"
+                  "`!monopoly roll` - Roll dice\n"
+                  "`!monopoly buy` - Buy property\n"
+                  "`!monopoly board` - View board\n"
+                  "`!monopoly status` - Your status\n"
+                  "`!monopoly properties` - All properties\n"
+                  "`!monopoly build <property>` - Build house/hotel\n"
+                  "`!monopoly mortgage <property>` - Mortgage property\n"
+                  "`!monopoly unmortgage <property>` - Unmortgage property\n"
+                  "`!monopoly end` - End game",
+            inline=False
+        )
+        await ctx.send(embed=embed)
+        return
+    
+    action = action.lower()
+    
+    if action == "start":
+        if ch in monopoly_games and monopoly_games[ch].get('state') in ['lobby', 'playing']:
+            await ctx.send("A Monopoly game is already active in this channel. Use `!monopoly end` to end it first.")
             return
+        
+        monopoly_games[ch] = {
+            'host': str(ctx.author.id),
+            'players': [str(ctx.author.id)],
+            'state': 'lobby',
+            'player_data': {},
+            'turn_order': [],
+            'current_turn': 0,
+            'properties': {},
+            'chance_deck': CHANCE_CARDS.copy(),
+            'chest_deck': COMMUNITY_CHEST_CARDS.copy(),
+            'doubles_count': 0
+        }
+        
+        _r.shuffle(monopoly_games[ch]['chance_deck'])
+        _r.shuffle(monopoly_games[ch]['chest_deck'])
+        
+        embed = discord.Embed(
+            title="🎲 Monopoly - Lobby Open",
+            description=f"Host: {ctx.author.mention}\n\nReact with ✅ to join!",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text="Host uses !monopoly begin to start the game")
+        
+        join_msg = await ctx.send(embed=embed)
+        await join_msg.add_reaction("✅")
+        
+        def check(reaction, user):
+            return str(reaction.emoji) == "✅" and reaction.message.id == join_msg.id and not user.bot
+        
+        async def wait_for_joins():
+            while monopoly_games.get(ch, {}).get('state') == 'lobby':
+                try:
+                    reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
+                    uid = str(user.id)
+                    if uid not in monopoly_games[ch]['players']:
+                        monopoly_games[ch]['players'].append(uid)
+                        await ctx.send(f"{user.mention} joined! Total players: {len(monopoly_games[ch]['players'])}")
+                except asyncio.TimeoutError:
+                    break
+        
+        bot.loop.create_task(wait_for_joins())
+        return
+    
+    elif action == "join":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'lobby':
+            await ctx.send("No Monopoly lobby is open. Host must use `!monopoly start` first.")
+            return
+        
+        uid = str(ctx.author.id)
+        if uid in monopoly_games[ch]['players']:
+            await ctx.send("You've already joined!")
+            return
+        
+        if len(monopoly_games[ch]['players']) >= 8:
+            await ctx.send("Maximum 8 players allowed!")
+            return
+        
+        monopoly_games[ch]['players'].append(uid)
+        await ctx.send(f"{ctx.author.mention} joined! Total players: {len(monopoly_games[ch]['players'])}")
+        return
+    
+    elif action == "begin":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'lobby':
+            await ctx.send("No lobby to begin. Use `!monopoly start` first.")
+            return
+        
+        game = monopoly_games[ch]
+        if str(ctx.author.id) != game['host']:
+            await ctx.send("Only the host can begin the game.")
+            return
+        
+        if len(game['players']) < 2:
+            await ctx.send("Need at least 2 players to start!")
+            return
+        
+        # Initialize player data
+        game['turn_order'] = game['players'].copy()
+        _r.shuffle(game['turn_order'])
+        
+        for uid in game['players']:
+            game['player_data'][uid] = {
+                'money': 1500,
+                'position': 0,
+                'properties': [],
+                'jail': False,
+                'jail_turns': 0,
+                'get_out_jail_free': 0,
+                'bankrupt': False
+            }
+        
+        game['state'] = 'playing'
+        game['current_turn'] = 0
+        
+        # Announce game start
+        current_player_id = game['turn_order'][0]
+        current_player = await bot.fetch_user(int(current_player_id))
+        
+        embed = discord.Embed(
+            title="🎲 Monopoly - Game Started!",
+            description=f"**{len(game['players'])} players** are in the game!\n\n"
+                       "Starting money: $1,500 per player",
+            color=discord.Color.gold()
+        )
+        embed.add_field(
+            name="Turn Order",
+            value="\n".join([f"{i+1}. <@{uid}>" for i, uid in enumerate(game['turn_order'])]),
+            inline=False
+        )
+        embed.add_field(
+            name="Current Turn",
+            value=f"{current_player.mention} - Use `!monopoly roll` to roll the dice!",
+            inline=False
+        )
+        embed.set_footer(text="Use !monopoly board to view the board | !monopoly status for your info")
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "roll":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in game['player_data']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        if game['turn_order'][game['current_turn']] != uid:
+            current_player = await bot.fetch_user(int(game['turn_order'][game['current_turn']]))
+            await ctx.send(f"It's not your turn! Current turn: {current_player.mention}")
+            return
+        
+        player = game['player_data'][uid]
+        
+        if player['bankrupt']:
+            await ctx.send("You're bankrupt and can't play!")
+            return
+        
+        # Check if in jail
+        if player['jail']:
+            dice1 = _r.randint(1, 6)
+            dice2 = _r.randint(1, 6)
+            
+            embed = discord.Embed(title="🎲 Dice Roll", color=discord.Color.blue())
+            embed.add_field(name="Roll", value=f"🎲 {dice1} + 🎲 {dice2} = {dice1 + dice2}", inline=False)
+            
+            if dice1 == dice2:
+                player['jail'] = False
+                player['jail_turns'] = 0
+                player['position'] = (player['position'] + dice1 + dice2) % 40
+                embed.add_field(name="✅ Doubles!", value="You rolled doubles and got out of jail!", inline=False)
+                await ctx.send(embed=embed)
+                await _handle_land_on_space(ctx, game, uid, player['position'])
+                game['doubles_count'] = 0
+                _next_turn(game)
+                return
+            else:
+                player['jail_turns'] += 1
+                if player['jail_turns'] >= 3:
+                    player['money'] -= 50
+                    player['jail'] = False
+                    player['jail_turns'] = 0
+                    player['position'] = (player['position'] + dice1 + dice2) % 40
+                    embed.add_field(name="💰 Paid $50", value="You paid $50 to get out of jail after 3 turns!", inline=False)
+                    await ctx.send(embed=embed)
+                    await _handle_land_on_space(ctx, game, uid, player['position'])
+                    game['doubles_count'] = 0
+                    _next_turn(game)
+                    return
+                else:
+                    embed.add_field(name="🔒 Still in Jail", value=f"No doubles. Turn {player['jail_turns']}/3 in jail.", inline=False)
+                    await ctx.send(embed=embed)
+                    game['doubles_count'] = 0
+                    _next_turn(game)
+                    return
+        
+        # Normal roll
+        dice1 = _r.randint(1, 6)
+        dice2 = _r.randint(1, 6)
+        total = dice1 + dice2
+        
+        embed = discord.Embed(title="🎲 Dice Roll", color=discord.Color.blue())
+        embed.add_field(name="Roll", value=f"🎲 {dice1} + 🎲 {dice2} = {total}", inline=False)
+        
+        # Check for doubles
+        if dice1 == dice2:
+            game['doubles_count'] += 1
+            if game['doubles_count'] >= 3:
+                player['jail'] = True
+                player['position'] = 10
+                game['doubles_count'] = 0
+                embed.add_field(name="🚨 3 Doubles!", value="You rolled doubles 3 times! Go to Jail!", inline=False)
+                await ctx.send(embed=embed)
+                _next_turn(game)
+                return
+            embed.add_field(name="✅ Doubles!", value="You get another turn!", inline=False)
+        else:
+            game['doubles_count'] = 0
+        
+        old_position = player['position']
+        player['position'] = (player['position'] + total) % 40
+        
+        # Check if passed GO
+        if player['position'] < old_position:
+            player['money'] += 200
+            embed.add_field(name="➡️ Passed GO!", value="Collected $200", inline=False)
+        
+        space = MONOPOLY_BOARD[player['position']]
+        embed.add_field(name="Landed On", value=f"{space['icon']} {space['name']}", inline=False)
+        
+        await ctx.send(embed=embed)
+        
+        # Handle landing on space
+        await _handle_land_on_space(ctx, game, uid, player['position'])
+        
+        # Next turn if not doubles
+        if dice1 != dice2:
+            _next_turn(game)
+        return
+    
+    elif action == "buy":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in game['player_data']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        player = game['player_data'][uid]
+        space = MONOPOLY_BOARD[player['position']]
+        
+        if space['type'] not in ['property', 'railroad', 'utility']:
+            await ctx.send("You can't buy this space!")
+            return
+        
+        prop_key = f"{player['position']}"
+        if prop_key in game['properties']:
+            await ctx.send("This property is already owned!")
+            return
+        
+        if player['money'] < space['price']:
+            await ctx.send(f"You don't have enough money! Price: ${space['price']}, You have: ${player['money']}")
+            return
+        
+        player['money'] -= space['price']
+        player['properties'].append(player['position'])
+        game['properties'][prop_key] = {
+            'owner': uid,
+            'houses': 0,
+            'mortgaged': False
+        }
+        
+        embed = discord.Embed(title="✅ Property Purchased!", color=discord.Color.green())
+        embed.add_field(name="Property", value=f"{space['icon']} {space['name']}", inline=True)
+        embed.add_field(name="Price", value=f"${space['price']}", inline=True)
+        embed.add_field(name="Remaining Money", value=f"${player['money']}", inline=True)
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "board":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        await _display_board(ctx, game)
+        return
+    
+    elif action == "status":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in game['player_data']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        player = game['player_data'][uid]
+        space = MONOPOLY_BOARD[player['position']]
+        
+        embed = discord.Embed(title=f"📊 {ctx.author.display_name}'s Status", color=discord.Color.blue())
+        embed.add_field(name="💰 Money", value=f"${player['money']}", inline=True)
+        embed.add_field(name="📍 Position", value=f"{space['icon']} {space['name']}", inline=True)
+        embed.add_field(name="🏠 Properties", value=str(len(player['properties'])), inline=True)
+        
+        if player['jail']:
+            embed.add_field(name="🔒 Jail Status", value=f"Turn {player['jail_turns']}/3 in jail", inline=False)
+        
+        if player['properties']:
+            props = []
+            for pos in player['properties']:
+                prop_space = MONOPOLY_BOARD[pos]
+                prop_info = game['properties'].get(str(pos), {})
+                houses = prop_info.get('houses', 0)
+                mortgaged = prop_info.get('mortgaged', False)
+                
+                status = " (MORTGAGED)" if mortgaged else f" [{houses}🏠]" if houses > 0 else ""
+                props.append(f"{prop_space['icon']} {prop_space['name']}{status}")
+            
+            embed.add_field(name="Your Properties", value="\n".join(props), inline=False)
+        
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "properties":
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        
+        embed = discord.Embed(title="🏠 All Properties", color=discord.Color.gold())
+        
+        for pos_str, prop_data in game['properties'].items():
+            pos = int(pos_str)
+            space = MONOPOLY_BOARD[pos]
+            owner = await bot.fetch_user(int(prop_data['owner']))
+            houses = prop_data.get('houses', 0)
+            mortgaged = prop_data.get('mortgaged', False)
+            
+            status = " (MORTGAGED)" if mortgaged else f" [{houses}🏠]" if houses > 0 else ""
+            embed.add_field(
+                name=f"{space['icon']} {space['name']}{status}",
+                value=f"Owner: {owner.display_name}",
+                inline=True
+            )
+        
+        if not game['properties']:
+            embed.description = "No properties have been purchased yet!"
+        
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "build":
+        if len(args) == 0:
+            await ctx.send("Usage: `!monopoly build <property name>`")
+            return
+        
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in game['player_data']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        player = game['player_data'][uid]
+        property_name = " ".join(args).lower()
+        
+        # Find the property
+        found_pos = None
+        for pos in player['properties']:
+            if MONOPOLY_BOARD[pos]['name'].lower() == property_name:
+                found_pos = pos
+                break
+        
+        if found_pos is None:
+            await ctx.send("You don't own that property!")
+            return
+        
+        space = MONOPOLY_BOARD[found_pos]
+        
+        if space['type'] not in ['property']:
+            await ctx.send("You can only build on regular properties!")
+            return
+        
+        # Check if owns all properties in group
+        group = space['group']
+        group_properties = [i for i, s in enumerate(MONOPOLY_BOARD) if s.get('group') == group]
+        
+        if not all(i in player['properties'] for i in group_properties):
+            await ctx.send("You must own all properties in the color group to build!")
+            return
+        
+        prop_data = game['properties'][str(found_pos)]
+        
+        if prop_data.get('mortgaged', False):
+            await ctx.send("You can't build on a mortgaged property!")
+            return
+        
+        if prop_data.get('houses', 0) >= 5:
+            await ctx.send("This property already has a hotel!")
+            return
+        
+        house_cost = space['house_cost']
+        
+        if player['money'] < house_cost:
+            await ctx.send(f"Not enough money! House cost: ${house_cost}, You have: ${player['money']}")
+            return
+        
+        player['money'] -= house_cost
+        prop_data['houses'] = prop_data.get('houses', 0) + 1
+        
+        building_type = "🏨 Hotel" if prop_data['houses'] == 5 else "🏠 House"
+        
+        embed = discord.Embed(title="✅ Building Constructed!", color=discord.Color.green())
+        embed.add_field(name="Property", value=f"{space['icon']} {space['name']}", inline=True)
+        embed.add_field(name="Built", value=building_type, inline=True)
+        embed.add_field(name="Cost", value=f"${house_cost}", inline=True)
+        embed.add_field(name="Total Buildings", value=f"{prop_data['houses']}🏠", inline=True)
+        embed.add_field(name="Remaining Money", value=f"${player['money']}", inline=True)
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "mortgage":
+        if len(args) == 0:
+            await ctx.send("Usage: `!monopoly mortgage <property name>`")
+            return
+        
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in game['player_data']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        player = game['player_data'][uid]
+        property_name = " ".join(args).lower()
+        
+        found_pos = None
+        for pos in player['properties']:
+            if MONOPOLY_BOARD[pos]['name'].lower() == property_name:
+                found_pos = pos
+                break
+        
+        if found_pos is None:
+            await ctx.send("You don't own that property!")
+            return
+        
+        space = MONOPOLY_BOARD[found_pos]
+        prop_data = game['properties'][str(found_pos)]
+        
+        if prop_data.get('mortgaged', False):
+            await ctx.send("This property is already mortgaged!")
+            return
+        
+        if prop_data.get('houses', 0) > 0:
+            await ctx.send("You must sell all houses before mortgaging!")
+            return
+        
+        mortgage_value = space['price'] // 2
+        player['money'] += mortgage_value
+        prop_data['mortgaged'] = True
+        
+        embed = discord.Embed(title="💰 Property Mortgaged", color=discord.Color.orange())
+        embed.add_field(name="Property", value=f"{space['icon']} {space['name']}", inline=True)
+        embed.add_field(name="Received", value=f"${mortgage_value}", inline=True)
+        embed.add_field(name="New Balance", value=f"${player['money']}", inline=True)
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "unmortgage":
+        if len(args) == 0:
+            await ctx.send("Usage: `!monopoly unmortgage <property name>`")
+            return
+        
+        if ch not in monopoly_games or monopoly_games[ch].get('state') != 'playing':
+            await ctx.send("No active Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        uid = str(ctx.author.id)
+        
+        if uid not in game['player_data']:
+            await ctx.send("You're not in this game!")
+            return
+        
+        player = game['player_data'][uid]
+        property_name = " ".join(args).lower()
+        
+        found_pos = None
+        for pos in player['properties']:
+            if MONOPOLY_BOARD[pos]['name'].lower() == property_name:
+                found_pos = pos
+                break
+        
+        if found_pos is None:
+            await ctx.send("You don't own that property!")
+            return
+        
+        space = MONOPOLY_BOARD[found_pos]
+        prop_data = game['properties'][str(found_pos)]
+        
+        if not prop_data.get('mortgaged', False):
+            await ctx.send("This property is not mortgaged!")
+            return
+        
+        unmortgage_cost = int(space['price'] // 2 * 1.1)
+        
+        if player['money'] < unmortgage_cost:
+            await ctx.send(f"Not enough money! Cost: ${unmortgage_cost}, You have: ${player['money']}")
+            return
+        
+        player['money'] -= unmortgage_cost
+        prop_data['mortgaged'] = False
+        
+        embed = discord.Embed(title="✅ Property Unmortgaged", color=discord.Color.green())
+        embed.add_field(name="Property", value=f"{space['icon']} {space['name']}", inline=True)
+        embed.add_field(name="Cost", value=f"${unmortgage_cost}", inline=True)
+        embed.add_field(name="New Balance", value=f"${player['money']}", inline=True)
+        await ctx.send(embed=embed)
+        return
+    
+    elif action == "end":
+        if ch not in monopoly_games:
+            await ctx.send("No Monopoly game in this channel.")
+            return
+        
+        game = monopoly_games[ch]
+        if str(ctx.author.id) != game['host'] and ctx.author.id != PRIVILEGED_USER_ID:
+            await ctx.send("Only the host can end the game.")
+            return
+        
+        # Determine winner (most money + property value)
+        winner_id = None
+        highest_value = 0
+        
+        for uid, pdata in game['player_data'].items():
+            if not pdata['bankrupt']:
+                total_value = pdata['money']
+                for pos in pdata['properties']:
+                    space = MONOPOLY_BOARD[pos]
+                    prop_data = game['properties'].get(str(pos), {})
+                    if not prop_data.get('mortgaged', False):
+                        total_value += space['price']
+                        total_value += prop_data.get('houses', 0) * space.get('house_cost', 0)
+                
+                if total_value > highest_value:
+                    highest_value = total_value
+                    winner_id = uid
+        
+        if winner_id:
+            winner = await bot.fetch_user(int(winner_id))
+            embed = discord.Embed(title="🏆 Game Over!", color=discord.Color.gold())
+            embed.add_field(name="Winner", value=winner.mention, inline=True)
+            embed.add_field(name="Total Value", value=f"${highest_value}", inline=True)
+            await ctx.send(embed=embed)
+        
+        del monopoly_games[ch]
+        await ctx.send("🎲 Monopoly game has been ended.")
+        return
+    
     else:
-        roll = random.randint(1,6)+random.randint(1,6)
-        next_pos = (p.position + roll) % 40
-        landed = MONOPOLY_BOARD[next_pos]
-        if landed == "GoToJail": p.position = 10; p.jail_turns = 3; await ctx.send(f"{p.emoji} sent to Jail!")
-        else: p.position = next_pos; await ctx.send(f"{p.emoji} rolled {roll} to {landed}")
+        await ctx.send("Unknown action. Use `!monopoly` to see available commands.")
 
-@bot.command()
-async def monopoly_buy(ctx):
-    p = GAME_INSTANCE.players[GAME_INSTANCE.current_player]
-    square = MONOPOLY_BOARD[p.position]
-    if square in PROPERTY_DETAILS and GAME_INSTANCE.owned[square] is None:
-        price = PROPERTY_DETAILS[square]["price"]
-        if p.money >= price:
-            p.money -= price; p.properties.append(square)
-            GAME_INSTANCE.owned[square] = p.name
-            await ctx.send(f"{p.name} bought {square} for ${price}")
-        else: await ctx.send("Not enough money!")
-    else: await ctx.send("Can't buy here.")
 
-@bot.command()
-async def monopoly_build(ctx, property_name):
-    p = GAME_INSTANCE.players[GAME_INSTANCE.current_player]
-    if property_name in p.properties:
-        if p.houses.get(property_name, 0) < 4 and not p.hotels.get(property_name, False):
-            p.houses[property_name] = p.houses.get(property_name, 0) + 1; p.money -= 50
-            await ctx.send(f"{p.emoji} built house on {property_name}!")
-        elif p.houses.get(property_name, 0) == 4 and not p.hotels.get(property_name, False):
-            p.hotels[property_name] = True; p.money -= 100
-            await ctx.send(f"{p.emoji} built hotel on {property_name}!")
-        else: await ctx.send("Max houses/hotel built.")
-    else: await ctx.send("You don't own this.")
+async def _handle_land_on_space(ctx, game, uid, position):
+    """Handle landing on a space."""
+    space = MONOPOLY_BOARD[position]
+    player = game['player_data'][uid]
+    
+    if space['type'] == 'property' or space['type'] == 'railroad' or space['type'] == 'utility':
+        prop_key = str(position)
+        
+        if prop_key in game['properties']:
+            owner_id = game['properties'][prop_key]['owner']
+            
+            if owner_id != uid:
+                prop_data = game['properties'][prop_key]
+                
+                if prop_data.get('mortgaged', False):
+                    await ctx.send(f"💤 {space['name']} is mortgaged. No rent due.")
+                    return
+                
+                rent = _calculate_rent(space, prop_data, game, owner_id)
+                
+                player['money'] -= rent
+                game['player_data'][owner_id]['money'] += rent
+                
+                owner = await bot.fetch_user(int(owner_id))
+                
+                embed = discord.Embed(title="💸 Rent Due!", color=discord.Color.red())
+                embed.add_field(name="Property", value=f"{space['icon']} {space['name']}", inline=True)
+                embed.add_field(name="Owner", value=owner.mention, inline=True)
+                embed.add_field(name="Rent", value=f"${rent}", inline=True)
+                embed.add_field(name="Your Money", value=f"${player['money']}", inline=True)
+                await ctx.send(embed=embed)
+                
+                if player['money'] < 0:
+                    await ctx.send(f"💀 {ctx.author.mention} is bankrupt!")
+                    player['bankrupt'] = True
+        else:
+            embed = discord.Embed(title="🏠 Property Available!", color=discord.Color.green())
+            embed.add_field(name="Property", value=f"{space['icon']} {space['name']}", inline=True)
+            embed.add_field(name="Price", value=f"${space['price']}", inline=True)
+            embed.add_field(name="Action", value="Use `!monopoly buy` to purchase!", inline=False)
+            await ctx.send(embed=embed)
+    
+    elif space['type'] == 'tax':
+        player['money'] -= space['amount']
+        embed = discord.Embed(title="💰 Tax Paid", color=discord.Color.orange())
+        embed.add_field(name="Tax", value=space['name'], inline=True)
+        embed.add_field(name="Amount", value=f"${space['amount']}", inline=True)
+        embed.add_field(name="Remaining", value=f"${player['money']}", inline=True)
+        await ctx.send(embed=embed)
+    
+    elif space['type'] == 'chance':
+        card = game['chance_deck'].pop(0)
+        game['chance_deck'].append(card)
+        
+        embed = discord.Embed(title="❓ Chance Card", color=discord.Color.purple())
+        embed.add_field(name="Card", value=card['text'], inline=False)
+        await ctx.send(embed=embed)
+        
+        await _execute_card_action(ctx, game, uid, card)
+    
+    elif space['type'] == 'chest':
+        card = game['chest_deck'].pop(0)
+        game['chest_deck'].append(card)
+        
+        embed = discord.Embed(title="📦 Community Chest", color=discord.Color.blue())
+        embed.add_field(name="Card", value=card['text'], inline=False)
+        await ctx.send(embed=embed)
+        
+        await _execute_card_action(ctx, game, uid, card)
+    
+    elif space['type'] == 'gotojail':
+        player['jail'] = True
+        player['position'] = 10
+        player['jail_turns'] = 0
+        
+        await ctx.send("👮 Go directly to Jail! Do not pass GO, do not collect $200.")
+    
+    elif space['type'] == 'special':
+        if space['name'] == 'Free Parking':
+            await ctx.send("🅿️ Just relaxing at Free Parking!")
 
-@bot.command()
-async def monopoly_mortgage(ctx, property_name):
-    p = GAME_INSTANCE.players[GAME_INSTANCE.current_player]
-    if property_name in p.properties and property_name not in p.mortgaged:
-        p.money += PROPERTY_DETAILS[property_name]["price"] // 2
-        p.mortgaged.add(property_name); await ctx.send(f"{property_name} mortgaged!")
-    else: await ctx.send("Invalid mortgage.")
 
-@bot.command()
-async def monopoly_trade(ctx, partner_name, offered, requested):
-    p = GAME_INSTANCE.players[GAME_INSTANCE.current_player]
-    other = GAME_INSTANCE.get_player(partner_name)
-    if other and offered in p.properties and requested in other.properties:
-        p.properties.remove(offered); other.properties.remove(requested)
-        p.properties.append(requested); other.properties.append(offered)
-        await ctx.send(f"Trade: {p.emoji} for {offered} with {other.emoji}'s {requested}")
-    else: await ctx.send("Invalid trade.")
+def _calculate_rent(space, prop_data, game, owner_id):
+    """Calculate rent for a property."""
+    if space['type'] == 'property':
+        houses = prop_data.get('houses', 0)
+        return space['rent'][houses]
+    
+    elif space['type'] == 'railroad':
+        # Count railroads owned
+        railroads = [5, 15, 25, 35]
+        owned_count = sum(1 for pos in game['player_data'][owner_id]['properties'] if MONOPOLY_BOARD[pos]['type'] == 'railroad')
+        return space['rent'][owned_count - 1]
+    
+    elif space['type'] == 'utility':
+        # Count utilities owned
+        utilities = [12, 28]
+        owned_count = sum(1 for pos in game['player_data'][owner_id]['properties'] if MONOPOLY_BOARD[pos]['type'] == 'utility')
+        # Rent is 4x or 10x dice roll (we'll use 7 as average)
+        multiplier = 10 if owned_count == 2 else 4
+        return multiplier * 7
+    
+    return 0
 
-@bot.command()
-async def monopoly_auction(ctx, property_name):
-    await ctx.send("Auction started! Type your bid. (Expand per needs)")
 
-@bot.command()
-async def monopoly_chest(ctx):
-    card = GAME_INSTANCE.chest_deck.pop(0)
-    await ctx.send(f"Community Chest: {card}")
+async def _execute_card_action(ctx, game, uid, card):
+    """Execute a Chance or Community Chest card action."""
+    player = game['player_data'][uid]
+    action = card['action']
+    
+    if action == 'move_to':
+        old_pos = player['position']
+        player['position'] = card['position']
+        
+        if player['position'] < old_pos:
+            player['money'] += 200
+            await ctx.send("➡️ Passed GO! Collected $200")
+        
+        await _handle_land_on_space(ctx, game, uid, player['position'])
+    
+    elif action == 'move_relative':
+        player['position'] = (player['position'] + card['spaces']) % 40
+        await _handle_land_on_space(ctx, game, uid, player['position'])
+    
+    elif action == 'collect':
+        player['money'] += card['amount']
+        await ctx.send(f"💰 Received ${card['amount']}")
+    
+    elif action == 'pay':
+        player['money'] -= card['amount']
+        await ctx.send(f"💸 Paid ${card['amount']}")
+    
+    elif action == 'jail':
+        player['jail'] = True
+        player['position'] = 10
+        player['jail_turns'] = 0
+        await ctx.send("🔒 Sent to Jail!")
+    
+    elif action == 'get_out_jail_free':
+        player['get_out_jail_free'] += 1
+        await ctx.send("🎫 You got a Get Out of Jail Free card!")
+    
+    elif action == 'pay_all':
+        amount_per_player = card['amount']
+        for other_uid in game['player_data'].keys():
+            if other_uid != uid and not game['player_data'][other_uid]['bankrupt']:
+                player['money'] -= amount_per_player
+                game['player_data'][other_uid]['money'] += amount_per_player
+        await ctx.send(f"💸 Paid ${amount_per_player} to each player")
+    
+    elif action == 'collect_from_all':
+        amount_per_player = card['amount']
+        for other_uid in game['player_data'].keys():
+            if other_uid != uid and not game['player_data'][other_uid]['bankrupt']:
+                player['money'] += amount_per_player
+                game['player_data'][other_uid]['money'] -= amount_per_player
+        await ctx.send(f"💰 Collected ${amount_per_player} from each player")
+    
+    elif action == 'repairs':
+        house_cost = card['house']
+        hotel_cost = card['hotel']
+        total_cost = 0
+        
+        for pos in player['properties']:
+            prop_data = game['properties'].get(str(pos), {})
+            houses = prop_data.get('houses', 0)
+            
+            if houses == 5:
+                total_cost += hotel_cost
+            else:
+                total_cost += houses * house_cost
+        
+        player['money'] -= total_cost
+        await ctx.send(f"🔧 Paid ${total_cost} for repairs")
 
-@bot.command()
-async def monopoly_chance(ctx):
-    card = GAME_INSTANCE.chance_deck.pop(0)
-    await ctx.send(f"Chance: {card}")
 
-@bot.command()
-async def monopoly_stats(ctx):
-    msg = "\n".join([f"{p.emoji}: {p.name} ${p.money}, Props: {', '.join(p.properties)}" for p in GAME_INSTANCE.players])
-    await ctx.send(msg)
+def _next_turn(game):
+    """Move to the next player's turn."""
+    game['current_turn'] = (game['current_turn'] + 1) % len(game['turn_order'])
+    
+    # Skip bankrupt players
+    skipped = 0
+    while game['player_data'][game['turn_order'][game['current_turn']]]['bankrupt'] and skipped < len(game['turn_order']):
+        game['current_turn'] = (game['current_turn'] + 1) % len(game['turn_order'])
+        skipped += 1
 
-@bot.command()
-async def monopoly_endturn(ctx):
-    GAME_INSTANCE.next_player()
-    await ctx.send("Next player's turn!")
-# ============================== END MONOPOLY FEATURE ==============================
 
+async def _display_board(ctx, game):
+    """Display the Monopoly board with player positions."""
+    board_lines = []
+    
+    # Top row (positions 20-30)
+    top_row = "```"
+    for i in range(20, 31):
+        space = MONOPOLY_BOARD[i]
+        players_here = [uid for uid, pdata in game['player_data'].items() if pdata['position'] == i and not pdata['bankrupt']]
+        
+        if players_here:
+            top_row += f"[{space['icon']}{len(players_here)}]"
+        else:
+            top_row += f" {space['icon']} "
+    top_row += "\n"
+    
+    # Middle rows (left side 19-11 and right side 31-39)
+    for i in range(9):
+        left_pos = 19 - i
+        right_pos = 31 + i
+        
+        left_space = MONOPOLY_BOARD[left_pos]
+        right_space = MONOPOLY_BOARD[right_pos]
+        
+        left_players = [uid for uid, pdata in game['player_data'].items() if pdata['position'] == left_pos and not pdata['bankrupt']]
+        right_players = [uid for uid, pdata in game['player_data'].items() if pdata['position'] == right_pos and not pdata['bankrupt']]
+        
+        left_str = f"[{left_space['icon']}{len(left_players)}]" if left_players else f" {left_space['icon']} "
+        right_str = f"[{right_space['icon']}{len(right_players)}]" if right_players else f" {right_space['icon']} "
+        
+        top_row += f"{left_str}" + " " * 29 + f"{right_str}\n"
+    
+    # Bottom row (positions 10-0)
+    for i in range(10, -1, -1):
+        space = MONOPOLY_BOARD[i]
+        players_here = [uid for uid, pdata in game['player_data'].items() if pdata['position'] == i and not pdata['bankrupt']]
+        
+        if players_here:
+            top_row += f"[{space['icon']}{len(players_here)}]"
+        else:
+            top_row += f" {space['icon']} "
+    
+    top_row += "```"
+    
+    embed = discord.Embed(title="🎲 Monopoly Board", description=top_row, color=discord.Color.gold())
+    
+    # Add player list
+    player_list = []
+    for i, uid in enumerate(game['turn_order']):
+        pdata = game['player_data'][uid]
+        if not pdata['bankrupt']:
+            try:
+                user = await bot.fetch_user(int(uid))
+                current = "👉 " if i == game['current_turn'] else ""
+                player_list.append(f"{current}{user.display_name}: ${pdata['money']} at {MONOPOLY_BOARD[pdata['position']]['icon']}{MONOPOLY_BOARD[pdata['position']]['name']}")
+            except:
+                pass
+    
+    if player_list:
+        embed.add_field(name="Players", value="\n".join(player_list), inline=False)
+    
+    embed.set_footer(text="Numbers in brackets show how many players are on that space")
+    await ctx.send(embed=embed)
+
+
+# -------------------- Among Us Game Mode --------------------
+amongus_sessions = {}
+        # -------------------- Monopoly Game Mode --------------------
+monopoly_games = {}
+
+# Monopoly board configuration
+MONOPOLY_BOARD = [
+    {"name": "GO", "type": "special", "icon": "➡️"},
+    {"name": "Mediterranean Avenue", "type": "property", "color": "brown", "price": 60, "rent": [2, 10, 30, 90, 160, 250], "house_cost": 50, "group": "brown", "icon": "🟤"},
+    {"name": "Community Chest", "type": "chest", "icon": "📦"},
+    {"name": "Baltic Avenue", "type": "property", "color": "brown", "price": 60, "rent": [4, 20, 60, 180, 320, 450], "house_cost": 50, "group": "brown", "icon": "🟤"},
+    {"name": "Income Tax", "type": "tax", "amount": 200, "icon": "💰"},
+    {"name": "Reading Railroad", "type": "railroad", "price": 200, "rent": [25, 50, 100, 200], "icon": "🚂"},
+    {"name": "Oriental Avenue", "type": "property", "color": "lightblue", "price": 100, "rent": [6, 30, 90, 270, 400, 550], "house_cost": 50, "group": "lightblue", "icon": "🔵"},
+    {"name": "Chance", "type": "chance", "icon": "❓"},
+    {"name": "Vermont Avenue", "type": "property", "color": "lightblue", "price": 100, "rent": [6, 30, 90, 270, 400, 550], "house_cost": 50, "group": "lightblue", "icon": "🔵"},
+    {"name": "Connecticut Avenue", "type": "property", "color": "lightblue", "price": 120, "rent": [8, 40, 100, 300, 450, 600], "house_cost": 50, "group": "lightblue", "icon": "🔵"},
+    {"name": "Jail/Just Visiting", "type": "jail", "icon": "🔒"},
+    {"name": "St. Charles Place", "type": "property", "color": "pink", "price": 140, "rent": [10, 50, 150, 450, 625, 750], "house_cost": 100, "group": "pink", "icon": "🌸"},
+    {"name": "Electric Company", "type": "utility", "price": 150, "icon": "⚡"},
+    {"name": "States Avenue", "type": "property", "color": "pink", "price": 140, "rent": [10, 50, 150, 450, 625, 750], "house_cost": 100, "group": "pink", "icon": "🌸"},
+    {"name": "Virginia Avenue", "type": "property", "color": "pink", "price": 160, "rent": [12, 60, 180, 500, 700, 900], "house_cost": 100, "group": "pink", "icon": "🌸"},
+    {"name": "Pennsylvania Railroad", "type": "railroad", "price": 200, "rent": [25, 50, 100, 200], "icon": "🚂"},
+    {"name": "St. James Place", "type": "property", "color": "orange", "price": 180, "rent": [14, 70, 200, 550, 750, 950], "house_cost": 100, "group": "orange", "icon": "🟠"},
+    {"name": "Community Chest", "type": "chest", "icon": "📦"},
+    {"name": "Tennessee Avenue", "type": "property", "color": "orange", "price": 180, "rent": [14, 70, 200, 550, 750, 950], "house_cost": 100, "group": "orange", "icon": "🟠"},
+    {"name": "New York Avenue", "type": "property", "color": "orange", "price": 200, "rent": [16, 80, 220, 600, 800, 1000], "house_cost": 100, "group": "orange", "icon": "🟠"},
+    {"name": "Free Parking", "type": "special", "icon": "🅿️"},
+    {"name": "Kentucky Avenue", "type": "property", "color": "red", "price": 220, "rent": [18, 90, 250, 700, 875, 1050], "house_cost": 150, "group": "red", "icon": "🔴"},
+    {"name": "Chance", "type": "chance", "icon": "❓"},
+    {"name": "Indiana Avenue", "type": "property", "color": "red", "price": 220, "rent": [18, 90, 250, 700, 875, 1050], "house_cost": 150, "group": "red", "icon": "🔴"},
+    {"name": "Illinois Avenue", "type": "property", "color": "red", "price": 240, "rent": [20, 100, 300, 750, 925, 1100], "house_cost": 150, "group": "red", "icon": "🔴"},
+    {"name": "B&O Railroad", "type": "railroad", "price": 200, "rent": [25, 50, 100, 200], "icon": "🚂"},
+    {"name": "Atlantic Avenue", "type": "property", "color": "yellow", "price": 260, "rent": [22, 110, 330, 800, 975, 1150], "house_cost": 150, "group": "yellow", "icon": "🟡"},
+    {"name": "Ventnor Avenue", "type": "property", "color": "yellow", "price": 260, "rent": [22, 110, 330, 800, 975, 1150], "house_cost": 150, "group": "yellow", "icon": "🟡"},
+    {"name": "Water Works", "type": "utility", "price": 150, "icon": "💧"},
+    {"name": "Marvin Gardens", "type": "property", "color": "yellow", "price": 280, "rent": [24, 120, 360, 850, 1025, 1200], "house_cost": 150, "group": "yellow", "icon": "🟡"},
+    {"name": "Go To Jail", "type": "gotojail", "icon": "👮"},
+    {"name": "Pacific Avenue", "type": "property", "color": "green", "price": 300, "rent": [26, 130, 390, 900, 1100, 1275], "house_cost": 200, "group": "green", "icon": "🟢"},
+    {"name": "North Carolina Avenue", "type": "property", "color": "green", "price": 300, "rent": [26, 130, 390, 900, 1100, 1275], "house_cost": 200, "group": "green", "icon": "🟢"},
+    {"name": "Community Chest", "type": "chest", "icon": "📦"},
+    {"name": "Pennsylvania Avenue", "type": "property", "color": "green", "price": 320, "rent": [28, 150, 450, 1000, 1200, 1400], "house_cost": 200, "group": "green", "icon": "🟢"},
+    {"name": "Short Line Railroad", "type": "railroad", "price": 200, "rent": [25, 50, 100, 200], "icon": "🚂"},
+    {"name": "Chance", "type": "chance", "icon": "❓"},
+    {"name": "Park Place", "type": "property", "color": "blue", "price": 350, "rent": [35, 175, 500, 1100, 1300, 1500], "house_cost": 200, "group": "blue", "icon": "🔵"},
+    {"name": "Luxury Tax", "type": "tax", "amount": 100, "icon": "💎"},
+    {"name": "Boardwalk", "type": "property", "color": "blue", "price": 400, "rent": [50, 200, 600, 1400, 1700, 2000], "house_cost": 200, "group": "blue", "icon": "🔵"}
+]
+
+CHANCE_CARDS = [
+    {"text": "Advance to GO (Collect $200)", "action": "move_to", "position": 0},
+    {"text": "Bank pays you dividend of $50", "action": "collect", "amount": 50},
+    {"text": "Go Back 3 Spaces", "action": "move_relative", "spaces": -3},
+    {"text": "Go directly to Jail. Do not pass GO", "action": "jail"},
+    {"text": "Make general repairs: $25 per house, $100 per hotel", "action": "repairs", "house": 25, "hotel": 100},
+    {"text": "Pay poor tax of $15", "action": "pay", "amount": 15},
+    {"text": "Take a trip to Reading Railroad", "action": "move_to", "position": 5},
+    {"text": "Take a walk on the Boardwalk", "action": "move_to", "position": 39},
+    {"text": "You have been elected Chairman. Pay each player $50", "action": "pay_all", "amount": 50},
+    {"text": "Your building loan matures. Collect $150", "action": "collect", "amount": 150},
+    {"text": "Get Out of Jail Free", "action": "get_out_jail_free"}
+]
+
+COMMUNITY_CHEST_CARDS = [
+    {"text": "Advance to GO (Collect $200)", "action": "move_to", "position": 0},
+    {"text": "Bank error in your favor. Collect $200", "action": "collect", "amount": 200},
+    {"text": "Doctor's fees. Pay $50", "action": "pay", "amount": 50},
+    {"text": "From sale of stock you get $50", "action": "collect", "amount": 50},
+    {"text": "Get Out of Jail Free", "action": "get_out_jail_free"},
+    {"text": "Go directly to Jail. Do not pass GO", "action": "jail"},
+    {"text": "Grand Opera Night. Collect $50 from each player", "action": "collect_from_all", "amount": 50},
+    {"text": "Holiday Fund matures. Receive $100", "action": "collect", "amount": 100},
+    {"text": "Income tax refund. Collect $20", "action": "collect", "amount": 20},
+    {"text": "Life insurance matures. Collect $100", "action": "collect", "amount": 100},
+    {"text": "Pay hospital fees of $100", "action": "pay", "amount": 100},
+    {"text": "Pay school fees of $50", "action": "pay", "amount": 50},
+    {"text": "Receive $25 consultancy fee", "action": "collect", "amount": 25},
+    {"text": "You are assessed for street repairs: $40 per house, $115 per hotel", "action": "repairs", "house": 40, "hotel": 115},
+    {"text": "You have won second prize in a beauty contest. Collect $10", "action": "collect", "amount": 10},
+    {"text": "You inherit $100", "action": "collect", "amount": 100}
+]
+
+# -------------------- Among Us Game Mode --------------------
+amongus_sessions = {}
 
 
 keep_alive()
